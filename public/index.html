@@ -1,6 +1,30 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shark Tank Aula</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="top"><div class="brand"><span class="shark">🦈</span><span>SHARK TANK <b>AULA</b></span></div><div id="stageBadge" class="badge">SALA</div></div>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shark Tank Aula</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="brandMark">🦈</span><div><strong>SHARK TANK</strong><span>AULA</span></div></div>
+  <div class="topRight"><div id="roundBadge" class="roundBadge">RONDA 1</div><div id="stageBadge" class="stageBadge">SALA</div></div>
+</header>
 <main id="app">
-<section id="login" class="card login"><h1>Entra a la sala</h1><p class="muted">Elige tu rol. El profesor controla la ronda desde su panel.</p><div class="grid2"><label>Nombre<input id="who" placeholder="Tu nombre"></label><label>Sala<input id="room" placeholder="Ej. 1A"></label></div><div class="roleBtns"><button data-role="teacher">👨‍🏫 Profesor</button><button data-role="entrepreneur">🚀 Emprendedor</button><button data-role="investor">🦈 Inversionista</button></div><div id="roleForm"></div></section>
+<section id="login" class="loginShell">
+  <div class="loginVisual"><div class="liveDot">● EN VIVO</div><div class="visualTitle">NEGOCIOS.<br><span>NEGOCIACIÓN.</span><br>DECISIONES.</div><p>Una simulación empresarial para aprender a presentar, preguntar, invertir y negociar.</p><div class="billShowcase" aria-label="Billetes del Banco Central de Don Fede">
+      <img src="/assets/billetes/10000.png" alt="Billete de 10 mil pesos">
+      <img src="/assets/billetes/100000.png" alt="Billete de 100 mil pesos">
+      <img src="/assets/billetes/500000.png" alt="Billete de 500 mil pesos">
+      <img src="/assets/billetes/1000000.png" alt="Billete de 1 millón de pesos">
+    </div></div>
+  <div class="loginForm card">
+    <div class="eyebrow">SHARK TANK · AULA</div><h1>Entra a la sala</h1><p class="subtitle">Elige tu rol. El profesor controla las rondas y todos los cambios aparecen en tiempo real.</p>
+    <div class="grid2"><label>Tu nombre<input id="who" placeholder="Ej. Roberto"></label><label>Sala<input id="room" placeholder="Ej. 3°A"></label></div>
+    <div class="roleBtns"><button data-role="teacher"><span>👨‍🏫</span><b>PROFESOR</b><small>Controlar la partida</small></button><button data-role="entrepreneur"><span>🚀</span><b>EMPRENDEDOR</b><small>Presentar el negocio</small></button><button data-role="investor"><span>🦈</span><b>INVERSIONISTA</b><small>Hacer ofertas</small></button></div>
+    <div id="roleForm"></div>
+  </div>
+</section>
 <section id="panel" class="hidden"></section>
-</main><script src="/socket.io/socket.io.js"></script><script src="app.js"></script></body></html>
+</main>
+<script src="/socket.io/socket.io.js"></script><script src="app.js"></script>
+</body></html>
