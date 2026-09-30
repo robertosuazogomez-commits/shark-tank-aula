@@ -108,8 +108,11 @@ body{background:linear-gradient(#000a,#000d),url(img/sala-madera.jpg) center/cov
 .scene.s2{--ar:1280/560;--top:-28.57%;--tl:42%;--tt:11.8%;--tw:15.8%;--th:20.9%}
 .scene.s1{--ar:736/330;--top:-69.7%;--tl:40.2%;--tt:36%;--tw:18.9%;--th:23.3%}
 .tv{position:absolute;left:var(--tl);top:var(--tt);width:var(--tw);height:var(--th);display:grid;place-content:center;text-align:center;padding:.5cqw;overflow:hidden;background:radial-gradient(#1a4d94,#071a3c);color:#fff;box-shadow:inset 0 0 1.2cqw #000c,0 0 2.5cqw #4aa3ff66}
-.tvn{font:800 clamp(7px,1.9cqw,26px)/1.05 'Barlow Condensed',sans-serif;text-shadow:0 0 .8cqw #7fc0ff;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.tvs{font:700 clamp(6px,.95cqw,13px) Inter,sans-serif;color:#ffd77a;margin-top:.4cqw}
+.tvn{font:800 clamp(7px,var(--fs,1.9cqw),46px)/1.05 'Barlow Condensed',sans-serif;text-shadow:0 0 .8cqw #7fc0ff;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tvs{font:700 clamp(6px,var(--fs2,.95cqw),22px) Inter,sans-serif;color:#ffd77a;margin-top:.4cqw}
 .scene .plate{z-index:2}
 main{margin-top:0}
 @media(max-width:760px){.scene{margin-top:14px}}
+
+.scene.s3{--ar:2352/1029;--top:-19.43%;--tl:40.6%;--tt:16.3%;--tw:33.4%;--th:43.4%;--fs:4.2cqw;--fs2:1.9cqw}
+.scene.s4{--ar:596/335;--top:0%;--tl:44.5%;--tt:8%;--tw:37.5%;--th:19.5%;--fs:3cqw;--fs2:1.4cqw}

@@ -1,0 +1,2 @@
+Coloca aqui tu archivo: trato-cerrado.mp3 (clip de 20-30 s).
+Se reproduce cuando se acepta una oferta. Si no existe, suena una fanfarria sintetica.
