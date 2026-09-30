@@ -1,0 +1,6 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shark Tank Aula</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="top"><div class="brand"><span class="shark">🦈</span><span>SHARK TANK <b>AULA</b></span></div><div id="stageBadge" class="badge">SALA</div></div>
+<main id="app">
+<section id="login" class="card login"><h1>Entra a la sala</h1><p class="muted">Elige tu rol. El profesor controla la ronda desde su panel.</p><div class="grid2"><label>Nombre<input id="who" placeholder="Tu nombre"></label><label>Sala<input id="room" placeholder="Ej. 1A"></label></div><div class="roleBtns"><button data-role="teacher">👨‍🏫 Profesor</button><button data-role="entrepreneur">🚀 Emprendedor</button><button data-role="investor">🦈 Inversionista</button></div><div id="roleForm"></div></section>
+<section id="panel" class="hidden"></section>
+</main><script src="/socket.io/socket.io.js"></script><script src="app.js"></script></body></html>
