@@ -4,7 +4,7 @@ const {Server}=require('socket.io');
 const path=require('path');
 const app=express(); const server=http.createServer(app); const io=new Server(server);
 app.use(express.static(path.join(__dirname,'public')));
-const state={stage:'lobby',room:'',company:{name:'',ask:0,equity:0},teams:{},offers:[],events:[],timer:{running:false,seconds:0}};
+const state={scene:'madera',stage:'lobby',room:'',company:{name:'',ask:0,equity:0},teams:{},offers:[],events:[],timer:{running:false,seconds:0}};
 const money=n=>Number(n||0);
 const DEN=[1000000,500000,100000,10000];
 const clean=b=>{const r={};DEN.forEach(d=>{r[d]=Math.max(0,Math.min(999,Math.floor(Number((b||{})[d])||0)))});return r;};
@@ -17,6 +17,7 @@ setInterval(timerTick,1000);
 io.on('connection',socket=>{
  socket.emit('state',publicState());
  socket.on('setSession',p=>{state.room=p.room||''; state.company={name:p.name||'',ask:billsSum(p.bills),bills:clean(p.bills),equity:money(p.equity)}; log('session',`Sala ${state.room}: ${state.company.name}`); broadcast();});
+ socket.on('scene',v=>{if(v==='madera'||v==='moderna'){state.scene=v;broadcast();}});
  socket.on('stage',s=>{state.stage=s; log('stage',s); broadcast();});
  socket.on('setTeam',p=>{state.teams[p.id]={id:p.id,name:p.name||`Equipo ${p.id}`,role:p.role||'investor',budget:money(p.budget)||20000000}; log('team',state.teams[p.id].name); broadcast();});
  socket.on('offer',p=>{
