@@ -93,3 +93,11 @@ button.gold{background:var(--brass);color:var(--ink2);border:1px solid #8a6a1f;b
 .offer button:not(.gold){background:#5a3520;color:#fff}
 #vault{background:radial-gradient(ellipse at center,#2b170dee,#0a0503f5)}
 @media(max-width:760px){.window{height:120px}main{padding:16px 10px}}
+/* ===== Fotografías (opcionales: si el archivo no existe, se ve el diseño anterior) ===== */
+body{background:linear-gradient(#0005,#000b),url(img/fondo-directorio.jpg) center/cover fixed,repeating-linear-gradient(90deg,#2b170d 0 3px,#3b2112 3px 150px) fixed,#2b170d}
+.window::before{content:"";position:absolute;inset:0;background:url(img/ventanal.jpg) center/cover no-repeat}
+.window{height:240px}
+.sillon{display:none;position:fixed;bottom:0;width:270px;height:360px;background:url(img/sillon.png) center bottom/contain no-repeat;pointer-events:none;filter:drop-shadow(0 12px 18px #000c);z-index:1}
+.sillon.izq{left:max(0px,calc(50% - 790px))}.sillon.der{right:max(0px,calc(50% - 790px));transform:scaleX(-1)}
+@media(min-width:1600px){.sillon{display:block}}
+main{z-index:2}

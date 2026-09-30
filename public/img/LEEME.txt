@@ -1,0 +1,4 @@
+Coloca aquí tus fotos con estos nombres exactos:
+fondo-directorio.jpg  -> sala de directorio (fondo de toda la pantalla, horizontal, 1920x1080)
+ventanal.jpg          -> banner superior (panorámica, ~1600x400: ventanal con ciudad o cabecera de mesa)
+sillon.png            -> sillón de cuero de perfil/3-4, PNG con fondo transparente (se muestra a ambos lados en pantallas anchas)
