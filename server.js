@@ -17,7 +17,7 @@ setInterval(timerTick,1000);
 io.on('connection',socket=>{
  socket.emit('state',publicState());
  socket.on('setSession',p=>{state.room=p.room||''; state.company={name:p.name||'',ask:billsSum(p.bills),bills:clean(p.bills),equity:money(p.equity)}; log('session',`Sala ${state.room}: ${state.company.name}`); broadcast();});
- socket.on('scene',v=>{if(['madera','moderna','londres','clasica'].includes(v)){state.scene=v;broadcast();}});
+ socket.on('scene',v=>{if(['madera','moderna','londres','clasica','galactica','rascacielos'].includes(v)){state.scene=v;broadcast();}});
  socket.on('stage',s=>{state.stage=s; log('stage',s); broadcast();});
  socket.on('setTeam',p=>{state.teams[p.id]={id:p.id,name:p.name||`Equipo ${p.id}`,role:p.role||'investor',budget:money(p.budget)||20000000}; log('team',state.teams[p.id].name); broadcast();});
  socket.on('offer',p=>{
