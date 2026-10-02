@@ -2,6 +2,7 @@ const express=require('express');
 const http=require('http');
 const {Server}=require('socket.io');
 const path=require('path');
+const {loadState,persistState,hasSupabase,DATA_FILE,TABLE}=require('./storage');
 const app=express();
 const server=http.createServer(app);
 const io=new Server(server);
@@ -23,6 +24,7 @@ const billsSum=b=>{b=clean(b);return DEN.reduce((t,d)=>t+d*b[d],0);};
 const now=()=>new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 function publicState(){return JSON.parse(JSON.stringify(state));}
 function broadcast(){io.emit('state',publicState());}
+function save(){persistState(state);}
 function log(type,data){state.events.unshift({id:Date.now()+Math.random(),type,data,at:now()});state.events=state.events.slice(0,120);}
 function roleCount(role){return Object.values(state.participants).filter(p=>p.role===role).length;}
 function nextSlot(role){return role==='investor'?`Inversionista ${roleCount(role)+1}`:`Emprendedor ${roleCount(role)+1}`;}
@@ -47,8 +49,10 @@ io.on('connection',socket=>{
     if(role==='entrepreneur' && !state.company.name && p.companyName){
       state.company={name:String(p.companyName).slice(0,80),ask:billsSum(p.bills),bills:clean(p.bills),equity:Math.max(1,Math.min(100,money(p.equity)||20))};
       log('session',`Empresa creada: ${state.company.name}`);
+      save();
     }
     log('participant',`${slot}: ${name}`);
+    save();
     socket.emit('registered',participant);
     broadcast();
   });
@@ -59,11 +63,11 @@ io.on('connection',socket=>{
     if(state.company.name)return socket.emit('errorMsg','La empresa ya fue configurada.');
     const name=String(p.name||'').trim().slice(0,80);const ask=billsSum(p.bills);const equity=Math.max(1,Math.min(100,money(p.equity)||20));
     if(!name||ask<=0)return socket.emit('errorMsg','Completa nombre y monto solicitado.');
-    state.company={name,ask,bills:clean(p.bills),equity};log('session',`Empresa creada: ${name}`);broadcast();
+    state.company={name,ask,bills:clean(p.bills),equity};log('session',`Empresa creada: ${name}`);save();broadcast();
   });
 
-  socket.on('scene',v=>{if(['madera','moderna','londres','clasica','galactica','rascacielos'].includes(v)){state.scene=v;broadcast();}});
-  socket.on('stage',s=>{state.stage=s;log('stage',s);broadcast();});
+  socket.on('scene',v=>{if(['madera','moderna','londres','clasica','galactica','rascacielos'].includes(v)){state.scene=v;save();broadcast();}});
+  socket.on('stage',s=>{state.stage=s;log('stage',s);save();broadcast();});
 
   socket.on('offer',p=>{
     const part=state.participants[socket.id];const team=part&&state.teams[part.id];
@@ -73,11 +77,11 @@ io.on('connection',socket=>{
     if(amount>team.budget)return socket.emit('errorMsg','Oferta superior al capital disponible.');
     const offer={id:Date.now()+Math.random(),investorId:part.id,investor:team.name,role:team.role,slot:team.slot,bills:clean(p.bills),amount,equity,condition:String(p.condition||'').slice(0,120),status:'active',at:now()};
     state.offers.forEach(o=>{if(o.investorId===part.id&&o.status==='active')o.status='replaced';});
-    state.offers.unshift(offer);log('offer',offer);broadcast();
+    state.offers.unshift(offer);log('offer',offer);save();broadcast();
   });
-  socket.on('withdraw',p=>{const o=state.offers.find(x=>x.id===p.id);if(o&&o.status==='active'&&o.investorId===socket.id){o.status='withdrawn';log('withdraw',o);broadcast();}});
-  socket.on('accept',p=>{const part=state.participants[socket.id];if(!part||part.role!=='entrepreneur')return;const o=state.offers.find(x=>x.id===p.id);if(!o)return;state.offers.forEach(x=>{if(x.status==='active')x.status='closed';});o.status='accepted';state.stage='result';log('accepted',o);broadcast();});
-  socket.on('timer',p=>{state.timer.running=!!p.running;if(p.seconds!=null)state.timer.seconds=Number(p.seconds);broadcast();});
+  socket.on('withdraw',p=>{const o=state.offers.find(x=>x.id===p.id);if(o&&o.status==='active'&&o.investorId===socket.id){o.status='withdrawn';log('withdraw',o);save();broadcast();}});
+  socket.on('accept',p=>{const part=state.participants[socket.id];if(!part||part.role!=='entrepreneur')return;const o=state.offers.find(x=>x.id===p.id);if(!o)return;state.offers.forEach(x=>{if(x.status==='active')x.status='closed';});o.status='accepted';state.stage='result';log('accepted',o);save();broadcast();});
+  socket.on('timer',p=>{state.timer.running=!!p.running;if(p.seconds!=null)state.timer.seconds=Number(p.seconds);save();broadcast();});
 
   socket.on('saveEvaluation',p=>{
     const validGroup=p.scope==='group'&&(p.group==='investors'||p.group==='entrepreneurs');
@@ -85,12 +89,31 @@ io.on('connection',socket=>{
     if(!validGroup&&!validIndividual)return;
     const key=validGroup?p.group:p.participantId;
     state.evaluations[validGroup?'group':'individual'][key]={scores:p.scores||{},total:Number(p.total)||0,updatedAt:now()};
+    save();
     log('evaluation',validGroup?`Evaluación grupal: ${p.group} (${Number(p.total)||0}/100)`: `Evaluación individual: ${state.participants[key].name} (${Number(p.total)||0}/100)`);
     broadcast();
   });
 
-  socket.on('reset',()=>{state.stage='lobby';state.offers=[];state.events=[];state.company={name:'',ask:0,bills:{},equity:0};state.participants={};state.teams={};state.evaluations={group:{investors:null,entrepreneurs:null},individual:{}};state.timer={running:false,seconds:0};broadcast();});
+  socket.on('reset',()=>{state.stage='lobby';state.offers=[];state.events=[];state.company={name:'',ask:0,bills:{},equity:0};state.participants={};state.teams={};state.evaluations={group:{investors:null,entrepreneurs:null},individual:{}};state.timer={running:false,seconds:0};save();broadcast();});
   socket.on('disconnect',()=>{ /* Conservamos el registro para que el profesor pueda evaluar. */ });
 });
 
-const PORT=process.env.PORT||3000;server.listen(PORT,()=>console.log(`Shark Tank Aula en ${PORT}`));
+const PORT=process.env.PORT||3000;
+
+async function start(){
+  try{
+    const saved=await loadState();
+    if(saved){
+      Object.assign(state,saved);
+      // Nunca reanudar un temporizador automáticamente después de un reinicio.
+      state.timer={...(state.timer||{}),running:false};
+      console.log(`[storage] Estado recuperado${hasSupabase?' desde Supabase':' desde '+DATA_FILE}.`);
+    }else{
+      console.log(`[storage] Sin estado previo. Las evaluaciones nuevas se guardarán${hasSupabase?' en Supabase':' en '+DATA_FILE}.`);
+    }
+  }catch(err){
+    console.error('[storage] No se pudo recuperar el estado:',err.message);
+  }
+  server.listen(PORT,()=>console.log(`Shark Tank Aula en ${PORT}`));
+}
+start();

@@ -20,4 +20,19 @@ npm install
 npm start
 ```
 
-La aplicación usa memoria de servidor para una ronda de clase. Un reinicio del servidor borra los registros de esa ronda.
+La aplicación ahora tiene persistencia de estado.
+
+### Persistencia permanente con Supabase (recomendado para Render)
+
+1. Ejecuta `supabase-schema.sql` en el SQL Editor de tu proyecto Supabase.
+2. En Render configura estas variables de entorno:
+   - `SUPABASE_URL` = URL de tu proyecto Supabase.
+   - `SUPABASE_SERVICE_ROLE_KEY` = service role key de Supabase (solo en el servidor; nunca en el navegador).
+   - `SHARK_STATE_ID` = opcional; por defecto `shark-tank-aula-main`.
+3. Reinicia el servicio.
+
+Las evaluaciones grupales e individuales, participantes, empresa, ofertas y registro quedan guardados en `public.app_state` y se recuperan automáticamente después de reiniciar el servidor.
+
+### Desarrollo local
+
+Si no se configuran las variables de Supabase, la aplicación guarda automáticamente el estado en `data/state.json`. Esto permite probar la persistencia localmente. En Render se recomienda usar Supabase, porque el sistema de archivos local del servicio no debe considerarse almacenamiento permanente.
