@@ -33,8 +33,9 @@ const IND_RUBRIC=[
 const LEVELS=[['excellent','Excelente',1],['adequate','Adecuado',.75],['insufficient','Insuficiente',.5]];
 const put=(id,h)=>{const e=$(id);if(e&&e._h!==h){e._h=h;e.innerHTML=h}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SHARK_TANK_BG='https://mvpvisuals.com/cdn/shop/articles/shark-tank-background-image.png?v=1756931871';
 const SC={madera:['s2','madera'],moderna:['s1','moderna'],londres:['s3','londres'],clasica:['s4','clasica'],galactica:['s5','galactica'],rascacielos:['s6','rascacielos']};
-function sceneUpdate(){const k=SC[S.scene]?S.scene:'madera',sc=$('scene');if(sc&&sc.dataset.k!==k){sc.dataset.k=k;sc.className='scene '+SC[k][0];$('sceneImg').src='img/sala-'+SC[k][1]+'.jpg'}const sel=$('sceneSel');if(sel&&sel.value!==k)sel.value=k}
+function sceneUpdate(){const k=SC[S.scene]?S.scene:'madera',sc=$('scene');if(sc&&sc.dataset.k!==k){sc.dataset.k=k;sc.className='scene '+SC[k][0];$('sceneImg').src=k==='madera'?SHARK_TANK_BG:'img/sala-'+SC[k][1]+'.jpg'}const sel=$('sceneSel');if(sel&&sel.value!==k)sel.value=k}
 function tvUpdate(){sceneUpdate();const c=S.company||{};put('tv',c.name?`<div class="tvn">${esc(c.name)}</div><div class="tvs">Busca ${peso(c.ask)} por ${c.equity}%</div>`:'<div class="tvn">Esperando emprendedores</div>')}
 const valuation=(a,e)=>e>0?peso(Math.round(a/e*100)):'—';
 function stack(b){return '<div class="stks">'+(D.filter(d=>(b||{})[d]).map(d=>{const n=b[d],v=Math.min(n,6);return `<div class="stk"><div class="pile" style="width:${118+(v-1)*14}px;height:${60+(v-1)*5}px">${Array.from({length:v},(_,i)=>`<img src="img/${d}.png" alt="Billete ${d}" style="left:${i*14}px;top:${(v-1-i)*5}px;z-index:${i}">`).join('')}</div><b>×${n}</b></div>`}).join('')||'<span class="muted">Toca un billete para empezar</span>')+'</div>'}

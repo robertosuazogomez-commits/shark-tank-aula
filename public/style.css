@@ -124,3 +124,12 @@ main{margin-top:0}
 .participantCols{display:grid;grid-template-columns:1fr 1fr;gap:18px}.participantRow{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#07231c;border:1px solid #6b5517;border-radius:7px;padding:11px 13px;margin:8px 0}.participantRow .pill{white-space:nowrap}
 .evalControls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}.rubricHead{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;padding:4px 0 18px;border-bottom:1px solid #6b551755}.rubricTotal{font:800 48px 'Barlow Condensed';color:#ffb02e;white-space:nowrap}.rubricTotal small{font:700 20px Inter;color:#d6e2dc}.rubricItem{padding:18px 0;border-bottom:1px solid #6b551755}.rubricTitle{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:10px;color:#f3e7c6}.rubricTitle span{font-size:12px;color:#d0b977;white-space:nowrap}.levels{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.level{text-align:left;display:flex;flex-direction:column;gap:5px;min-height:116px;background:#09281f;border:1px solid #6b5517;color:#f3e7c6;padding:11px;border-radius:7px}.level strong{font-size:14px;color:#e8c36a}.level span{font-size:12px;line-height:1.4;color:#d6e2dc;font-weight:500}.level em{font-style:normal;font-weight:800;color:#ffb02e;margin-top:auto}.level.selected{border:2px solid #f3d27a;background:linear-gradient(160deg,#174a38,#0a261e);box-shadow:0 0 0 2px #b8862b55,inset 0 0 20px #e8b33918}.rubricActions{justify-content:flex-end;padding-top:16px}.notice b{color:#f3e7c6}
 @media(max-width:760px){.participantCols,.evalControls,.levels{grid-template-columns:1fr}.rubricHead{flex-direction:column}.rubricTotal{font-size:38px}}
+
+/* ===== Fondo principal Shark Tank Aula ===== */
+.scene.s2{--ar:1280/560;--top:0%;}
+.scene.s2 #sceneImg{top:0;width:100%;height:100%;object-fit:cover;object-position:center;}
+.scene.s2::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0002 0%,#00000008 45%,#0009 100%),linear-gradient(90deg,#0005 0%,transparent 28%,transparent 72%,#0005 100%);pointer-events:none;z-index:1;}
+.scene.s2 .tv,.scene.s2 .plate{z-index:3;}
+.scene.s2 .tv{background:radial-gradient(#0b2348dd,#020914dd);border:1px solid #d5ad4a99;box-shadow:inset 0 0 1.2cqw #000c,0 0 2.5cqw #d5ad4a55;}
+.scene.s2 .plate{background:linear-gradient(145deg,#f3d27a,#b8862b 55%,#e8c36a);color:#2b1a0c;letter-spacing:.08em;}
+@media(max-width:760px){.scene.s2{--ar:16/9;}}
