@@ -438,3 +438,26 @@ textarea::placeholder {
   color: #9edcff !important;
   opacity: 1;
 }
+/* Corrección visual de ofertas aceptadas */
+.offer.accepted {
+  background: #123b2d !important;
+  color: #ffffff !important;
+  border-color: #3ddc97 !important;
+}
+
+.offer.accepted * {
+  color: #ffffff !important;
+}
+
+.offer.accepted .muted {
+  color: #c9e8dc !important;
+}
+
+.offer.accepted .pill {
+  background: #3ddc97 !important;
+  color: #062018 !important;
+}
+
+.offer.accepted .money {
+  color: #ffffff !important;
+}
