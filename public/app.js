@@ -33,7 +33,7 @@ const IND_RUBRIC=[
 const LEVELS=[['excellent','Excelente',1],['adequate','Adecuado',.75],['insufficient','Insuficiente',.5]];
 const put=(id,h)=>{const e=$(id);if(e&&e._h!==h){e._h=h;e.innerHTML=h}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const SHARK_TANK_BG='https://mvpvisuals.com/cdn/shop/articles/shark-tank-background-image.png?v=1756931871';
+const SHARK_TANK_BG='img/shark-tank-background-image.png';
 const SC={madera:['s2','madera'],moderna:['s1','moderna'],londres:['s3','londres'],clasica:['s4','clasica'],galactica:['s5','galactica'],rascacielos:['s6','rascacielos'],shark:['s7','shark']};
 function sceneUpdate(){const k=SC[S.scene]?S.scene:'madera',sc=$('scene');if(sc&&sc.dataset.k!==k){sc.dataset.k=k;sc.className='scene '+SC[k][0];$('sceneImg').src=k==='shark'?SHARK_TANK_BG:'img/sala-'+SC[k][1]+'.jpg'}const sel=$('sceneSel');if(sel&&sel.value!==k)sel.value=k}
 function tvUpdate(){sceneUpdate();const c=S.company||{};put('tv',c.name?`<div class="tvn">${esc(c.name)}</div><div class="tvs">Busca ${peso(c.ask)} por ${c.equity}%</div>`:'<div class="tvn">Esperando emprendedores</div>')}
