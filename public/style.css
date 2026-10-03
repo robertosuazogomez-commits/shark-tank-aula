@@ -220,3 +220,88 @@ body.presentation .presentationPanel{display:block;position:fixed;left:50%;top:9
 .brand { position:relative; overflow:hidden; }
 .brandShark { width:58px; height:34px; object-fit:cover; object-position:center; border-radius:6px; margin-left:10px; border:1px solid #d4ad55aa; box-shadow:0 0 14px #0008; opacity:.9; }
 @media(max-width:760px){ .brandShark{width:46px;height:28px;margin-left:6px}.scene.s2{--tl:42%;--tt:12.5%;--tw:16%;--th:19.5%;} }
+
+
+/* ===== CORRECCIÓN DEFINITIVA: TV de Sala de madera + Cena galáctica =====
+/* sala-madera.jpg es 1280x960 y la escena 1280x560 recorta 200 px arriba y abajo.
+   El televisor original ocupa aprox. x=538..743, y=223..345.
+   Por eso, dentro de la escena recortada, la pantalla queda cerca de:
+   left 42%, top 4.1%, width 16%, height 21.8%. */
+.scene.s2{
+  --ar:1280/560;
+  --top:0%;
+  --tl:42.0%;
+  --tt:4.2%;
+  --tw:16.0%;
+  --th:21.8%;
+}
+.scene.s2 #sceneImg{
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+}
+.scene.s2 .tv{
+  z-index:5;
+  box-sizing:border-box;
+  padding:.45cqw;
+  border:1px solid rgba(213,173,74,.75);
+  background:radial-gradient(circle at 50% 42%,rgba(19,61,112,.98),rgba(2,9,20,.99));
+  box-shadow:inset 0 0 1.2cqw #000c,0 0 2.5cqw rgba(213,173,74,.32);
+}
+.scene.s2 .plate{z-index:4}
+
+/* En modo escenario el recorte cambia porque la fotografía llena el viewport.
+   La TV pasa a quedar aproximadamente en x=42%, y=14.5%, 16% x 16.7%. */
+body.presentation .scene.s2{
+  --tl:42.0%;
+  --tt:14.5%;
+  --tw:16.0%;
+  --th:16.7%;
+}
+body.presentation .scene.s2 .tv{
+  transform:none;
+}
+
+/* Cena galáctica: conservar la fotografía completa y seleccionable. */
+.scene.s5{
+  --ar:550/394;
+  --top:0%;
+  --fs:2.6cqw;
+  --fs2:1.2cqw;
+}
+.scene.s5 #sceneImg{
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+}
+/* La fotografía galáctica no tiene televisor; no superponer el panel azul. */
+.scene.s5 .tv{display:none}
+.scene.s5 .plate{z-index:3}
+
+/* Identidad visual Shark Tank: usar la imagen de tiburones también como decoración
+   aunque la copia local no esté presente todavía; el segundo background actúa como fallback. */
+.brand::before{
+  background-image:
+    linear-gradient(90deg,#06141df5 0%,#06141db8 38%,#06141d55 72%,#06141d18 100%),
+    url('img/shark-tank-background-image.png'),
+    url('https://raw.githubusercontent.com/robertosuazogomez-commits/shark-tank-aula/main/public/img/shark-tank-background-image.png');
+  background-position:center,center 46%,center 46%;
+  background-size:cover,cover,cover;
+  background-repeat:no-repeat;
+}
+main::before{
+  background-image:
+    linear-gradient(180deg,#06141d00 0%,#06141d55 100%),
+    url('img/shark-tank-background-image.png'),
+    url('https://raw.githubusercontent.com/robertosuazogomez-commits/shark-tank-aula/main/public/img/shark-tank-background-image.png');
+}
+@media(max-width:760px){
+  .scene.s2{--ar:16/9;--tl:42%;--tt:14.5%;--tw:16%;--th:16.7%}
+  .scene.s5{--ar:550/394}
+}
