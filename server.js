@@ -7,7 +7,7 @@ const {loadState,persistState,hasSupabase,DATA_FILE,TABLE}=require('./storage');
 const app=express();
 const server=http.createServer(app);
 const io=new Server(server);
-const TEACHER_PIN=String(process.env.TEACHER_PIN||'');
+function teacherPin(){ return String(process.env.TEACHER_PIN || '').trim(); }
 app.use(express.static(path.join(__dirname,'public')));
 
 const MAX_PER_ROLE=5;
@@ -40,8 +40,9 @@ function broadcast(){for(const socket of io.sockets.sockets.values())socket.emit
 function save(){persistState(state);}
 function teacherOnly(socket){if(socket.data.teacher)return true;socket.emit('errorMsg','Acceso reservado al panel del profesor.');return false;}
 function pinMatches(input){
-  if(!TEACHER_PIN)return false;
-  const a=Buffer.from(String(input||''));const b=Buffer.from(TEACHER_PIN);
+  const configured=teacherPin();
+  if(!configured)return false;
+  const a=Buffer.from(String(input||''));const b=Buffer.from(configured);
   return a.length===b.length && crypto.timingSafeEqual(a,b);
 }
 function log(type,data){state.events.unshift({id:Date.now()+Math.random(),type,data,at:now()});state.events=state.events.slice(0,120);}
@@ -54,7 +55,8 @@ io.on('connection',socket=>{
   socket.emit('state',stateFor(socket));
 
   socket.on('teacherLogin',p=>{
-    if(!TEACHER_PIN)return socket.emit('teacherLoginError','El acceso del profesor aún no está configurado. Define TEACHER_PIN en Render.');
+    const configured=teacherPin();
+    if(!configured)return socket.emit('teacherLoginError','El acceso del profesor aún no está configurado. Define TEACHER_PIN en Render y vuelve a desplegar/reiniciar el servicio.');
     if(!pinMatches(p?.pin))return socket.emit('teacherLoginError','Código de profesor incorrecto.');
     socket.data.teacher=true;
     socket.data.role='teacher';
