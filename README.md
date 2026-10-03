@@ -36,3 +36,16 @@ Las evaluaciones grupales e individuales, participantes, empresa, ofertas y regi
 ### Desarrollo local
 
 Si no se configuran las variables de Supabase, la aplicación guarda automáticamente el estado en `data/state.json`. Esto permite probar la persistencia localmente. En Render se recomienda usar Supabase, porque el sistema de archivos local del servicio no debe considerarse almacenamiento permanente.
+
+## Exportación de evaluaciones
+
+El panel del profesor incluye **⬇ Descargar evaluaciones**. Descarga un CSV compatible con Excel que reúne las evaluaciones grupales e individuales de la ronda actual y de las rondas anteriores archivadas.
+
+Al pulsar **Reiniciar ronda**, la aplicación conserva antes de limpiar la ronda:
+- número de ronda;
+- empresa;
+- participantes;
+- evaluaciones grupales de inversionistas y emprendedores;
+- evaluaciones individuales de cada participante.
+
+El archivo se descarga como `shark-tank-aula-evaluaciones.csv` e incluye el puntaje total y el puntaje obtenido en cada criterio.

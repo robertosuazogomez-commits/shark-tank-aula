@@ -15,6 +15,7 @@ const state={
   company:{name:'',ask:0,bills:{},equity:0},
   participants:{}, teams:{}, offers:[], events:[],
   evaluations:{group:{investors:null,entrepreneurs:null},individual:{}},
+  rounds:[],currentRound:1,
   timer:{running:false,seconds:0}
 };
 
@@ -89,12 +90,22 @@ io.on('connection',socket=>{
     if(!validGroup&&!validIndividual)return;
     const key=validGroup?p.group:p.participantId;
     state.evaluations[validGroup?'group':'individual'][key]={scores:p.scores||{},total:Number(p.total)||0,updatedAt:now()};
-    save();
     log('evaluation',validGroup?`Evaluación grupal: ${p.group} (${Number(p.total)||0}/100)`: `Evaluación individual: ${state.participants[key].name} (${Number(p.total)||0}/100)`);
+    save();
     broadcast();
   });
 
-  socket.on('reset',()=>{state.stage='lobby';state.offers=[];state.events=[];state.company={name:'',ask:0,bills:{},equity:0};state.participants={};state.teams={};state.evaluations={group:{investors:null,entrepreneurs:null},individual:{}};state.timer={running:false,seconds:0};save();broadcast();});
+  socket.on('reset',()=>{
+    const hasRoundData=Object.keys(state.participants||{}).length||state.company?.name||state.evaluations?.group?.investors||state.evaluations?.group?.entrepreneurs||Object.keys(state.evaluations?.individual||{}).length;
+    if(hasRoundData){
+      const participants=Object.values(state.participants||{}).map(p=>({id:p.id,name:p.name,role:p.role,slot:p.slot,style:p.style||'',budget:p.budget||0}));
+      state.rounds=Array.isArray(state.rounds)?state.rounds:[];
+      state.rounds.push({number:Number(state.currentRound)||state.rounds.length+1,closedAt:new Date().toISOString(),company:JSON.parse(JSON.stringify(state.company||{})),participants,evaluations:JSON.parse(JSON.stringify(state.evaluations||{}))});
+    }
+    state.currentRound=(Number(state.currentRound)||1)+1;
+    state.stage='lobby';state.offers=[];state.events=[];state.company={name:'',ask:0,bills:{},equity:0};state.participants={};state.teams={};state.evaluations={group:{investors:null,entrepreneurs:null},individual:{}};state.timer={running:false,seconds:0};
+    save();broadcast();
+  });
   socket.on('disconnect',()=>{ /* Conservamos el registro para que el profesor pueda evaluar. */ });
 });
 
@@ -105,6 +116,9 @@ async function start(){
     const saved=await loadState();
     if(saved){
       Object.assign(state,saved);
+      if(!Array.isArray(state.rounds))state.rounds=[];
+      if(!Number(state.currentRound))state.currentRound=state.rounds.length+1;
+      if(!state.evaluations)state.evaluations={group:{investors:null,entrepreneurs:null},individual:{}};
       // Nunca reanudar un temporizador automáticamente después de un reinicio.
       state.timer={...(state.timer||{}),running:false};
       console.log(`[storage] Estado recuperado${hasSupabase?' desde Supabase':' desde '+DATA_FILE}.`);
