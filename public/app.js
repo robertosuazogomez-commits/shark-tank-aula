@@ -43,21 +43,53 @@ function stack(b){return '<div class="stks">'+(D.filter(d=>(b||{})[d]).map(d=>{c
 function picker(id,avail){pk={};pkAvail=avail;$(id).innerHTML=`<div class="denoms">${D.map(d=>`<div class="den"><img src="img/${d}.png" alt="${peso(d)}" onclick="pick(${d},1)"><div class="ctl"><button onclick="pick(${d},-1)" aria-label="Quitar">−</button><b id="c${d}">0</b><button onclick="pick(${d},1)" aria-label="Agregar">+</button></div>${avail?`<small class="muted">${avail[d]} en tu maletín</small>`:''}</div>`).join('')}</div><div class="tray"><div class="total" id="tot">$0</div><div id="tb">${stack({})}</div><button onclick="clearPick()">Vaciar mesa</button></div>`}
 function pick(d,k){const max=pkAvail?pkAvail[d]:999;pk[d]=Math.max(0,Math.min(max,(pk[d]||0)+k));D.forEach(x=>$('c'+x).textContent=pk[x]||0);$('tot').textContent=peso(sum(pk));$('tb').innerHTML=stack(pk)}
 function clearPick(){D.forEach(d=>pk[d]=0);pick(D[0],0)}
-function setRole(role){me.role=role;document.querySelectorAll('.roleBtns button').forEach(b=>b.classList.toggle('gold',b.dataset.role===role));let h='';
-if(role==='teacher')h='<div class="notice">Panel de profesor: registro de participantes, actividad y evaluación mediante rúbricas.</div><div class="actions"><button class="gold" id="enter">Abrir panel</button></div>';
-if(role==='entrepreneur'){const hasCompany=!!S.company?.name;h=`<div class="notice">${hasCompany?`La empresa <b>${esc(S.company.name)}</b> ya fue configurada. Puedes registrarte como parte del equipo emprendedor.`:'La primera persona emprendedora que entre configurará la empresa. Las siguientes se incorporarán al mismo equipo.'}</div>${!hasCompany?`<label style="margin-top:14px">Nombre de la empresa<input id="company" placeholder="Ej. AquaSmart"></label><h3 style="margin-top:16px">¿Cuánto dinero solicitan?</h3><div id="pick"></div><label style="margin-top:14px">Participación que ofrecen: <b id="eqv">20</b>%<input id="equity" type="range" min="1" max="100" value="20" oninput="eqv.textContent=this.value"></label>`:''}<div class="actions"><button class="gold" id="enter">Entrar como emprendedor</button></div>`}
-if(role==='investor')h='<div class="grid2"><label>Capital disponible ($)<input id="budget" type="number" step="1000000" value="20000000"></label><label>Estilo de inversionista<input id="investorRole" placeholder="Ej. escéptico"></label></div><div class="actions"><button class="gold" id="enter">Entrar como inversionista</button></div>';
-$('roleForm').innerHTML=h;if(role==='entrepreneur'&&!S.company?.name)picker('pick',null);$('enter').onclick=enter}
+function showTeacherLogin(){
+  $('entryGate').classList.add('hidden');
+  $('login').classList.add('hidden');
+  $('teacherLogin').classList.remove('hidden');
+  setTimeout(()=>$('teacherPin')?.focus(),50);
+}
+function showParticipantLogin(){
+  $('entryGate').classList.add('hidden');
+  $('teacherLogin').classList.add('hidden');
+  $('login').classList.remove('hidden');
+}
+function backToEntry(){
+  $('entryGate').classList.remove('hidden');
+  $('teacherLogin').classList.add('hidden');
+  $('login').classList.add('hidden');
+  $('panel').classList.add('hidden');
+  me={role:null,name:'',room:'',id:'',slot:''};
+}
+function teacherLogin(){
+  const pin=$('teacherPin')?.value||'';
+  if(!pin)return showTeacherError('Escribe el código de profesor.');
+  socket.emit('teacherLogin',{pin});
+}
+function showTeacherError(msg){
+  const e=$('teacherError');
+  if(e){e.textContent=msg;e.classList.remove('hidden');}
+}
+function setRole(role){
+  if(role!=='entrepreneur'&&role!=='investor')return;
+  me.role=role;
+  document.querySelectorAll('.roleBtns button').forEach(b=>b.classList.toggle('gold',b.dataset.role===role));
+  let h='';
+  if(role==='entrepreneur'){const hasCompany=!!S.company?.name;h=`<div class="notice">${hasCompany?`La empresa <b>${esc(S.company.name)}</b> ya fue configurada. Puedes registrarte como parte del equipo emprendedor.`:'La primera persona emprendedora que entre configurará la empresa. Las siguientes se incorporarán al mismo equipo.'}</div>${!hasCompany?`<label style="margin-top:14px">Nombre de la empresa<input id="company" placeholder="Ej. AquaSmart"></label><h3 style="margin-top:16px">¿Cuánto dinero solicitan?</h3><div id="pick"></div><label style="margin-top:14px">Participación que ofrecen: <b id="eqv">20</b>%<input id="equity" type="range" min="1" max="100" value="20" oninput="eqv.textContent=this.value"></label>`:''}<div class="actions"><button class="gold" id="enter">Entrar como emprendedor</button></div>`}
+  if(role==='investor')h='<div class="grid2"><label>Capital disponible ($)<input id="budget" type="number" step="1000000" value="20000000"></label><label>Estilo de inversionista<input id="investorRole" placeholder="Ej. escéptico"></label></div><div class="actions"><button class="gold" id="enter">Entrar como inversionista</button></div>';
+  $('roleForm').innerHTML=h;if(role==='entrepreneur'&&!S.company?.name)picker('pick',null);$('enter').onclick=enter;
+}
 document.querySelectorAll('.roleBtns button').forEach(b=>b.onclick=()=>setRole(b.dataset.role));
+$('teacherEnter').onclick=teacherLogin;
+$('teacherPin').addEventListener('keydown',e=>{if(e.key==='Enter')teacherLogin()});
 function enter(){me.name=$('who').value.trim();me.room=$('room').value.trim()||'A';if(!me.name)return alert('Escribe tu nombre.');
-if(me.role==='teacher'){renderTeacher();return}
 if(me.role==='entrepreneur'){const p={role:'entrepreneur',name:me.name,room:me.room};if(!S.company?.name){if(!$('company').value.trim())return alert('Escribe el nombre de la empresa.');if(!sum(pk))return alert('Elige los billetes que solicitarán.');p.companyName=$('company').value.trim();p.bills=pk;p.equity=$('equity').value}socket.emit('register',p);return}
 const budget=Math.max(0,Number($('budget').value)||20000000);socket.emit('register',{role:'investor',name:me.name,room:me.room,budget,style:$('investorRole').value||'Inversionista'})}
-function base(){$('login').classList.add('hidden');$('panel').classList.remove('hidden')}
+function base(){$('entryGate').classList.add('hidden');$('teacherLogin').classList.add('hidden');$('login').classList.add('hidden');$('panel').classList.remove('hidden')}
 const stageControls=()=>'<div class="stagebar">'+stages.map(x=>`<button data-stage="${x[0]}" class="${S.stage===x[0]?'active':''}">${x[1]}</button>`).join('')+'</div>';
 function hero(){const c=S.company||{};return `<div class="hero"><div><span class="pill">💼 Empresa en el Tank</span><h1>${esc(c.name||'Esperando emprendedores…')}</h1><div class="muted">Valoración implícita: <b>${valuation(c.ask,c.equity)}</b></div></div><div><div class="muted">Solicitan</div><div class="big">${peso(c.ask)}</div>${stack(c.bills)}</div><div class="donut" style="--p:${c.equity||0}"><span>${c.equity||0}%</span></div></div>`}
 function renderTeacher(){base();$('panel').innerHTML=`<div class="card"><div id="hero"></div>${stageControls()}<div class="split" style="margin-top:16px"><div><div class="actions"><button onclick="timerSet(300)">⏱ 5 min</button><button onclick="timerSet(120)">⏱ 2 min</button><button onclick="timerToggle()">▶ / ⏸</button><select id="sceneSel" class="sceneSelect" aria-label="Sala" onchange="socket.emit('scene',this.value)"><option value="madera">Sala de madera</option><option value="shark">Escenario Shark Tank</option><option value="moderna">Sala moderna</option><option value="londres">Sala Londres</option><option value="clasica">Reunión clásica</option><option value="galactica">Cena galáctica</option><option value="rascacielos">Sala rascacielos</option></select><button onclick="togglePresentation()">🎬 Modo escenario</button><button onclick="downloadEvaluations()">⬇ Descargar evaluaciones</button><button class="danger" onclick="socket.emit('reset')">↻ Nueva ronda</button></div><div class="timer" id="timer"></div></div><div class="stats" id="tstats"></div></div></div><div class="card"><h2>Participantes registrados</h2><div id="participants"></div></div><div class="card"><h2>Evaluación · Ronda ${S.currentRound||1}</h2><div id="evaluation"></div></div><div class="card"><h2>Ofertas en la mesa</h2><div id="offers"></div></div><div class="card"><h2>Registro</h2><div class="log" id="log"></div></div>`;bindStage();refresh()}
-function renderEntrepreneur(){base();$('panel').innerHTML=`<div class="card"><div id="hero"></div>${stageControls()}<div class="notice">Registrado como <b>${esc(me.name)}</b> · <b>${esc(me.slot)}</b>. Presenten, escuchen las preguntas y decidan qué oferta aceptar.</div></div><div class="card"><h2>Ofertas recibidas</h2><div id="offers"></div></div>`;bindStage();refresh()}
+function renderEntrepreneur(){base();$('panel').innerHTML=`<div class="card"><div id="hero"></div><div class="notice">Registrado como <b>${esc(me.name)}</b> · <b>${esc(me.slot)}</b>. Presenten, escuchen las preguntas y decidan qué oferta aceptar.</div></div><div class="card"><h2>Ofertas recibidas</h2><div id="offers"></div></div>`;bindStage();refresh()}
 function renderInvestor(role){base();const t=+$('budget').value||20000000,w=wallet(t);$('panel').innerHTML=`<div class="card"><span class="pill">🦈 ${esc(role)}</span><h1>${esc(me.name)}</h1><div class="stats"><div class="stat">Capital<b>${peso(t)}</b></div><div class="stat">Empresa<b id="ic">—</b></div><div class="stat">Solicita<b id="ia">—</b></div><div class="stat">Ofrece<b id="ie">—</b></div></div></div><div class="card"><h2>Arma tu oferta</h2><p class="muted">Toca los billetes de tu maletín para ponerlos sobre la mesa.</p><div id="pick"></div><div class="grid2" style="margin-top:14px"><label>Participación que pides: <b id="eqv">20</b>%<input id="offerEquity" type="range" min="1" max="100" value="20" oninput="eqv.textContent=this.value"></label><label>Condición (opcional)<input id="condition" placeholder="Ej. un asiento en el directorio"></label></div><div class="actions"><button class="gold" onclick="makeOffer()">🦈 Poner la oferta en la mesa</button></div></div><div class="card"><h2>Ofertas en la mesa</h2><div id="offers"></div></div>`;picker('pick',w);refresh()}
 function togglePresentation(){
   document.body.classList.toggle('presentation');
@@ -125,7 +157,9 @@ function makeOffer(){if(!sum(pk))return alert('Pon al menos un billete sobre la 
 const timerSet=s=>socket.emit('timer',{seconds:s,running:false});const timerToggle=()=>socket.emit('timer',{seconds:S.timer?.seconds||0,running:!S.timer?.running});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 socket.on('state',s=>{S=s;tvUpdate();if(me.role&&!$('panel').classList.contains('hidden'))refresh()});
+socket.on('teacherAuthenticated',()=>{me={role:'teacher',name:'Profesor',room:'',id:'teacher',slot:'Profesor'};renderTeacher()});
 socket.on('registered',p=>{me={...me,...p};if(me.role==='entrepreneur')renderEntrepreneur();else renderInvestor(p.style||'Inversionista')});
+socket.on('teacherLoginError',m=>showTeacherError(m));
 socket.on('errorMsg',m=>alert(m));
 tvUpdate();
 let dealAudio=null;

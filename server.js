@@ -2,10 +2,12 @@ const express=require('express');
 const http=require('http');
 const {Server}=require('socket.io');
 const path=require('path');
+const crypto=require('crypto');
 const {loadState,persistState,hasSupabase,DATA_FILE,TABLE}=require('./storage');
 const app=express();
 const server=http.createServer(app);
 const io=new Server(server);
+const TEACHER_PIN=String(process.env.TEACHER_PIN||'');
 app.use(express.static(path.join(__dirname,'public')));
 
 const MAX_PER_ROLE=5;
@@ -24,8 +26,24 @@ const clean=b=>{const r={};DEN.forEach(d=>{r[d]=Math.max(0,Math.min(999,Math.flo
 const billsSum=b=>{b=clean(b);return DEN.reduce((t,d)=>t+d*b[d],0);};
 const now=()=>new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 function publicState(){return JSON.parse(JSON.stringify(state));}
-function broadcast(){io.emit('state',publicState());}
+function stateFor(socket){
+  const full=publicState();
+  if(socket?.data?.teacher)return full;
+  // Participantes reciben solo el estado necesario para jugar.
+  delete full.evaluations;
+  delete full.rounds;
+  delete full.events;
+  full.participants=Object.fromEntries(Object.entries(full.participants||{}).map(([id,p])=>[id,{id:p.id,name:p.name,role:p.role,slot:p.slot}]));
+  return full;
+}
+function broadcast(){for(const socket of io.sockets.sockets.values())socket.emit('state',stateFor(socket));}
 function save(){persistState(state);}
+function teacherOnly(socket){if(socket.data.teacher)return true;socket.emit('errorMsg','Acceso reservado al panel del profesor.');return false;}
+function pinMatches(input){
+  if(!TEACHER_PIN)return false;
+  const a=Buffer.from(String(input||''));const b=Buffer.from(TEACHER_PIN);
+  return a.length===b.length && crypto.timingSafeEqual(a,b);
+}
 function log(type,data){state.events.unshift({id:Date.now()+Math.random(),type,data,at:now()});state.events=state.events.slice(0,120);}
 function roleCount(role){return Object.values(state.participants).filter(p=>p.role===role).length;}
 function nextSlot(role){return role==='investor'?`Inversionista ${roleCount(role)+1}`:`Emprendedor ${roleCount(role)+1}`;}
@@ -33,9 +51,19 @@ function timerTick(){if(!state.timer.running)return;if(state.timer.seconds<=0){s
 setInterval(timerTick,1000);
 
 io.on('connection',socket=>{
-  socket.emit('state',publicState());
+  socket.emit('state',stateFor(socket));
+
+  socket.on('teacherLogin',p=>{
+    if(!TEACHER_PIN)return socket.emit('teacherLoginError','El acceso del profesor aún no está configurado. Define TEACHER_PIN en Render.');
+    if(!pinMatches(p?.pin))return socket.emit('teacherLoginError','Código de profesor incorrecto.');
+    socket.data.teacher=true;
+    socket.data.role='teacher';
+    socket.emit('teacherAuthenticated');
+    socket.emit('state',stateFor(socket));
+  });
 
   socket.on('register',p=>{
+    if(socket.data.teacher)return socket.emit('errorMsg','La sesión del profesor no puede registrarse como participante.');
     const role=p.role==='investor'||p.role==='entrepreneur'?p.role:null;
     if(!role)return socket.emit('errorMsg','Selecciona un rol.');
     const name=String(p.name||'').trim().slice(0,80);
@@ -43,6 +71,7 @@ io.on('connection',socket=>{
     if(roleCount(role)>=MAX_PER_ROLE)return socket.emit('errorMsg',`Ya hay ${MAX_PER_ROLE} ${role==='investor'?'inversionistas':'emprendedores'} registrados.`);
     const id=socket.id;
     const slot=nextSlot(role);
+    socket.data.role=role;
     const participant={id,name,role,slot,budget:role==='investor'?Math.max(0,money(p.budget)||20000000):0,style:role==='investor'?String(p.style||'Inversionista').slice(0,80):'',joinedAt:now(),socketId:socket.id};
     state.participants[id]=participant;
     if(role==='investor')state.teams[id]={id,name,role,budget:participant.budget,slot,style:participant.style};
@@ -67,8 +96,8 @@ io.on('connection',socket=>{
     state.company={name,ask,bills:clean(p.bills),equity};log('session',`Empresa creada: ${name}`);save();broadcast();
   });
 
-  socket.on('scene',v=>{if(['madera','moderna','londres','clasica','galactica','rascacielos'].includes(v)){state.scene=v;save();broadcast();}});
-  socket.on('stage',s=>{state.stage=s;log('stage',s);save();broadcast();});
+  socket.on('scene',v=>{if(!teacherOnly(socket))return;if(['madera','moderna','londres','clasica','galactica','rascacielos','shark'].includes(v)){state.scene=v;save();broadcast();}});
+  socket.on('stage',s=>{if(!teacherOnly(socket))return;if(['lobby','pitch','questions','negotiation','result'].includes(s)){state.stage=s;log('stage',s);save();broadcast();}});
 
   socket.on('offer',p=>{
     const part=state.participants[socket.id];const team=part&&state.teams[part.id];
@@ -82,9 +111,10 @@ io.on('connection',socket=>{
   });
   socket.on('withdraw',p=>{const o=state.offers.find(x=>x.id===p.id);if(o&&o.status==='active'&&o.investorId===socket.id){o.status='withdrawn';log('withdraw',o);save();broadcast();}});
   socket.on('accept',p=>{const part=state.participants[socket.id];if(!part||part.role!=='entrepreneur')return;const o=state.offers.find(x=>x.id===p.id);if(!o)return;state.offers.forEach(x=>{if(x.status==='active')x.status='closed';});o.status='accepted';state.stage='result';log('accepted',o);save();broadcast();});
-  socket.on('timer',p=>{state.timer.running=!!p.running;if(p.seconds!=null)state.timer.seconds=Number(p.seconds);save();broadcast();});
+  socket.on('timer',p=>{if(!teacherOnly(socket))return;state.timer.running=!!p.running;if(p.seconds!=null)state.timer.seconds=Math.max(0,Number(p.seconds)||0);save();broadcast();});
 
   socket.on('saveEvaluation',p=>{
+    if(!teacherOnly(socket))return;
     const validGroup=p.scope==='group'&&(p.group==='investors'||p.group==='entrepreneurs');
     const validIndividual=p.scope==='individual'&&state.participants[p.participantId];
     if(!validGroup&&!validIndividual)return;
@@ -96,6 +126,7 @@ io.on('connection',socket=>{
   });
 
   socket.on('reset',()=>{
+    if(!teacherOnly(socket))return;
     const hasRoundData=Object.keys(state.participants||{}).length||state.company?.name||state.evaluations?.group?.investors||state.evaluations?.group?.entrepreneurs||Object.keys(state.evaluations?.individual||{}).length;
     if(hasRoundData){
       const participants=Object.values(state.participants||{}).map(p=>({id:p.id,name:p.name,role:p.role,slot:p.slot,style:p.style||'',budget:p.budget||0}));

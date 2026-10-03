@@ -1,7 +1,34 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shark Tank Aula</title><link rel="stylesheet" href="style.css?v=tv-galactica-20261003"></head><body>
-<header class="top"><div class="brand"><span class="shark">🦈</span><span>Shark Tank <b>Aula</b></span><img class="brandShark" src="https://raw.githubusercontent.com/robertosuazogomez-commits/shark-tank-aula/main/public/img/shark-tank-background-image.png" alt="Tiburones de Shark Tank" aria-hidden="true"></div><div class="ticker" id="ticker">Mercado abierto · esperando empresa</div><div id="stageBadge" class="badge">Sala</div></header>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Shark Tank Aula</title><link rel="stylesheet" href="style.css?v=blue-sharks-20261003"></head><body>
+<header class="top"><div class="brand"><span class="shark">🦈</span><span>Shark Tank <b>Aula</b></span></div><div class="ticker" id="ticker">Mercado abierto · esperando empresa</div><div id="stageBadge" class="badge">Sala</div></header>
 <div class="scene s2" id="scene"><img id="sceneImg" src="img/sala-madera.jpg" alt="Shark Tank Aula"><div class="tv" id="tv"></div><span class="plate">SHARK TANK AULA · SALA DE NEGOCIACIÓN</span><div id="presentationPanel" class="presentationPanel"></div><button id="presentationClose" class="presentationClose hidden" onclick="togglePresentation()">✕ Salir del escenario</button></div>
 <main id="app">
-<section id="login" class="card login"><h1>Entra a la sala de inversión</h1><p class="muted">Elige tu rol. El profesor controla la ronda desde su panel.</p><div class="grid2"><label>Nombre<input id="who" placeholder="Tu nombre"></label><label>Sala<input id="room" placeholder="Ej. 1A"></label></div><div class="roleBtns"><button data-role="teacher">👨‍🏫 Profesor</button><button data-role="entrepreneur">🚀 Emprendedor</button><button data-role="investor">🦈 Inversionista</button></div><div id="roleForm"></div></section>
+<section id="entryGate" class="entryGate">
+  <div class="entryHero">
+    <div class="entryBrand">🦈 <span>SHARK TANK <b>AULA</b></span></div>
+    <p>Selecciona cómo vas a entrar a la actividad.</p>
+  </div>
+  <div class="entryGrid">
+    <button class="entryCard entryTeacher" onclick="showTeacherLogin()">
+      <span class="entryIcon">👨‍🏫</span><strong>Panel del profesor</strong>
+      <small>Control de la ronda, salas, temporizador y evaluaciones.</small>
+    </button>
+    <button class="entryCard entryParticipant" onclick="showParticipantLogin()">
+      <span class="entryIcon">🦈</span><strong>Emprendedores e inversionistas</strong>
+      <small>Entrada para quienes participan en el Shark Tank.</small>
+    </button>
+  </div>
+</section>
+<section id="teacherLogin" class="card login accessCard hidden">
+  <span class="accessKicker">ACCESO RESTRINGIDO</span><h1>Panel del profesor</h1>
+  <p class="muted">Introduce el código de acceso del profesor. Este acceso se valida en el servidor.</p>
+  <label>Código de profesor<input id="teacherPin" type="password" autocomplete="current-password" placeholder="Código de acceso"></label>
+  <div class="actions"><button class="gold" id="teacherEnter">Entrar al panel</button><button onclick="backToEntry()">Volver</button></div>
+  <div id="teacherError" class="accessError hidden"></div>
+</section>
+<section id="login" class="card login hidden">
+  <div class="participantHeader"><div><span class="accessKicker">ACCESO PARTICIPANTES</span><h1>Entra al Shark Tank</h1><p class="muted">Elige tu rol para participar en la ronda.</p></div><button onclick="backToEntry()">← Volver</button></div>
+  <div class="grid2"><label>Nombre<input id="who" placeholder="Tu nombre"></label><label>Sala<input id="room" placeholder="Ej. 1A"></label></div>
+  <div class="roleBtns"><button data-role="entrepreneur">🚀 Emprendedor</button><button data-role="investor">🦈 Inversionista</button></div><div id="roleForm"></div>
+</section>
 <section id="panel" class="hidden"></section>
 </main><div id="vault" class="hidden"></div><script src="/socket.io/socket.io.js"></script><script src="app.js"></script></body></html>

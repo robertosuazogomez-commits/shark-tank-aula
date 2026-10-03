@@ -305,3 +305,123 @@ main::before{
   .scene.s2{--ar:16/9;--tl:42%;--tt:14.5%;--tw:16%;--th:16.7%}
   .scene.s5{--ar:550/394}
 }
+
+
+/* ===== NUEVA IDENTIDAD SHARK TANK AULA · AZUL + TIBURONES ===== */
+:root{
+  --shark-blue:#071a2f;
+  --shark-blue-2:#0b2d52;
+  --shark-blue-3:#124b7a;
+  --shark-cyan:#37b9ff;
+  --shark-ice:#dff4ff;
+  --shark-line:#24618e;
+  --shark-gold:#e8bd57;
+}
+body{
+  background:
+    radial-gradient(circle at 50% 0%,#103b63aa 0%,transparent 38%),
+    linear-gradient(135deg,#020a14 0%,#061a2d 52%,#03101d 100%);
+}
+body::before{background:radial-gradient(ellipse at 50% 20%,transparent 30%,#0009 100%)}
+.top{
+  background:linear-gradient(90deg,#020a14f5,#08223af2 55%,#03111ff5);
+  border-bottom:2px solid var(--shark-cyan);
+}
+.brand{
+  min-width:360px;
+  background:linear-gradient(90deg,#03101df5,#0a2a47dd);
+  border-left:1px solid #37b9ff55;
+  border-right:1px solid #37b9ff55;
+}
+.brand::before{
+  background-image:
+    linear-gradient(90deg,#03101df8 0%,#06203ad8 35%,#06203a70 72%,#03101d20 100%),
+    url('https://raw.githubusercontent.com/robertosuazogomez-commits/shark-tank-aula/main/public/img/shark-tank-background-image.png');
+  background-position:center,center 46%;
+  background-size:cover,cover;
+  opacity:1;
+}
+.brand::after{border-bottom-color:#37b9ff55}
+.brand>span{color:#fff}.brand>b{color:var(--shark-cyan)}
+.brand .shark{filter:drop-shadow(0 0 8px #37b9ff99)}
+.ticker{background:#061a2bf2;border-color:#1d557d;color:#78d2ff}
+.badge{background:var(--shark-cyan);color:#02101b}
+main::before{
+  background-image:
+    linear-gradient(180deg,#061a2d00,#061a2dcc),
+    url('https://raw.githubusercontent.com/robertosuazogomez-commits/shark-tank-aula/main/public/img/shark-tank-background-image.png');
+  background-position:center,center 42%;
+  background-size:cover,cover;
+  opacity:.16;
+}
+.card{
+  background:linear-gradient(145deg,#0a2944f2,#061727f5 70%,#04101cf8);
+  border-color:var(--shark-line);
+  border-top-color:var(--shark-cyan);
+  box-shadow:0 18px 60px #0009,0 0 0 1px #37b9ff0c;
+}
+button{background:linear-gradient(135deg,#103b60,#0a2743);border:1px solid #24618e;color:#e9f7ff}
+button:hover{filter:brightness(1.18);box-shadow:0 0 18px #37b9ff2b}
+button.gold,.gold{background:linear-gradient(135deg,#e8bd57,#c99229)!important;color:#101a23!important;border-color:#f4d57f!important}
+input,select{background:#031321;border-color:#205477}
+input:focus-visible,button:focus-visible{outline-color:var(--shark-cyan)}
+.pill{background:#0d3d64;border:1px solid #2775a7;color:#dff4ff}
+.notice{background:#061c2ff2;border-left-color:var(--shark-cyan)}
+.stats .stat{background:#031321;border-color:#174c70}
+
+/* Pantalla inicial de selección de acceso */
+.entryGate{max-width:980px;margin:32px auto 0;position:relative;overflow:hidden;padding:0;border:1px solid #24618e;border-radius:20px;background:linear-gradient(145deg,#061a2ef7,#04101df9)}
+.entryGate::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#03101df0 0%,#082c4fc9 45%,#03101d90 100%),url('https://raw.githubusercontent.com/robertosuazogomez-commits/shark-tank-aula/main/public/img/shark-tank-background-image.png') center/cover no-repeat;opacity:.65;pointer-events:none}
+.entryHero,.entryGrid{position:relative;z-index:1}
+.entryHero{padding:34px 34px 18px;text-align:center}
+.entryBrand{font:800 clamp(34px,6vw,64px)/1 'Barlow Condensed';letter-spacing:.04em;text-shadow:0 5px 20px #000}
+.entryBrand:first-letter{filter:drop-shadow(0 0 10px #37b9ff)}
+.entryBrand b{color:var(--shark-cyan)}
+.entryHero p{margin:12px 0 0;color:#c4dfef;font-size:15px}
+.entryGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:18px 28px 30px}
+.entryCard{min-height:220px;border:1px solid #2c77a6;border-radius:16px;padding:28px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:10px;background:linear-gradient(145deg,#0b3354eF,#06192bf5);box-shadow:0 16px 35px #0007;transition:transform .18s,border-color .18s,box-shadow .18s}
+.entryCard:hover{transform:translateY(-5px);border-color:#54c7ff;box-shadow:0 20px 45px #0009,0 0 28px #37b9ff24}
+.entryTeacher{background:linear-gradient(145deg,#0d3658f5,#071b2ef5)}
+.entryParticipant{background:linear-gradient(145deg,#0a4168f5,#061c31f5)}
+.entryIcon{font-size:46px;filter:drop-shadow(0 0 12px #37b9ff66)}
+.entryCard strong{font:800 30px 'Barlow Condensed';color:#f5fbff}
+.entryCard small{font:500 14px/1.5 Inter;color:#b7d4e6;max-width:420px}
+.accessCard{max-width:680px;margin:32px auto}
+.accessKicker{display:inline-block;font:800 11px Inter;letter-spacing:.16em;color:#63c9ff;margin-bottom:7px}
+.accessError{margin-top:12px;padding:10px 12px;border:1px solid #b54a4a;background:#351519;color:#ffd4d4;border-radius:7px}
+.participantHeader{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:18px}
+.participantHeader>button{flex:0 0 auto}
+.roleBtns button{background:linear-gradient(145deg,#0d3b60,#08233c);border-color:#286f9e}
+.roleBtns button.gold{background:linear-gradient(135deg,#37b9ff,#1778ad)!important;color:#02101b!important;border-color:#8edfff!important}
+
+/* La nueva sala galáctica usa la imagen subida por el profesor. */
+.scene.s5{--ar:2048/1389;--top:0%;--fs:2.6cqw;--fs2:1.2cqw}
+.scene.s5 #sceneImg{top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center center}
+.scene.s5 .tv{display:none}
+.scene.s5 .plate{z-index:3;background:linear-gradient(135deg,#123f68,#0a2845);color:#e8f7ff;border:1px solid #37b9ff88;box-shadow:0 8px 25px #0008}
+
+/* El resto de la aplicación hereda la nueva paleta sin alterar la geometría de la TV de madera. */
+.timer,.big,.money,.total{color:var(--shark-cyan)}
+@media(max-width:760px){
+  .entryGrid{grid-template-columns:1fr;padding:14px}
+  .entryCard{min-height:175px}
+  .entryHero{padding:26px 18px 10px}
+  .brand{min-width:0;flex:1}
+  .participantHeader{flex-direction:column}
+}
+
+/* Ajustes finales de paleta para paneles, sin alterar la geometría de la TV de madera. */
+#panel>.card:first-child{background:linear-gradient(145deg,#0b3354,#061a2c 70%,#04111e);border-color:#24618e;border-top-color:#37b9ff}
+#panel>.card:first-child .stagebar,#panel>.card:first-child .actions{background:#041522;border-color:#1c4d70}
+.level{background:#06233a;border-color:#1b5a82;color:#e8f7ff}
+.level strong{color:#73d0ff}.level span{color:#c6dfed}.level em{color:#73d0ff}
+.level.selected{border-color:#58c9ff;background:linear-gradient(160deg,#0b4167,#061e32);box-shadow:0 0 0 2px #37b9ff33,inset 0 0 20px #37b9ff14}
+.participantRow{background:#06243a;border-color:#1b5a82}.participantRow:hover{border-color:#58c9ff}
+.offer{border-color:#205477;border-left-color:#37b9ff;background-color:#061c2f}
+.offer.accepted{border-left-color:#5ce0b0;background-color:#083126}
+.rubricTitle{color:#e8f7ff}.rubricTitle span{color:#78b8d8}
+.presentationHead{border-color:#37b9ff88;background:linear-gradient(90deg,#020b15e8,#062442e8 55%,#020b15e8)}
+.presentationKicker,.presentationTimer,.presentationCompany b,.poMoney{color:#73d0ff}
+.presentationCompany{background:#37b9ff55}.presentationCompany>div{background:#031522ee}
+.presentationOffer{border-color:#37b9ff66;border-left-color:#37b9ff;background:linear-gradient(145deg,#06233aeF,#03131feF)}
+.presentationDeal{border-color:#5ce0b0;background:#05291fe8}

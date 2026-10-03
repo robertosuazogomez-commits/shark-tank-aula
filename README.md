@@ -49,3 +49,12 @@ Al pulsar **Reiniciar ronda**, la aplicación conserva antes de limpiar la ronda
 - evaluaciones individuales de cada participante.
 
 El archivo se descarga como `shark-tank-aula-evaluaciones.csv` e incluye el puntaje total y el puntaje obtenido en cada criterio.
+
+
+## Acceso separado profesor / participantes
+
+La pantalla inicial ahora separa el acceso en dos rutas: **Panel del profesor** y **Emprendedores e inversionistas**. El panel docente no se habilita solo con seleccionar un rol: el servidor exige un código configurado en la variable de entorno `TEACHER_PIN`.
+
+En Render, agrega `TEACHER_PIN` en **Environment Variables** y usa un código privado. No lo pongas en GitHub ni en el HTML/JavaScript del navegador. Las acciones de profesor (salas, etapas, temporizador, evaluaciones y nueva ronda) también se validan en el servidor.
+
+La nueva sala galáctica utiliza la fotografía subida para esta versión y conserva la sala de madera sin modificar su geometría de pantalla.
