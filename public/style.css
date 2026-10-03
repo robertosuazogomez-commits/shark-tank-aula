@@ -6,10 +6,18 @@ body{margin:0;min-height:100vh;color:var(--text);font-family:Inter,Arial,sans-se
 linear-gradient(90deg,#0f2c3d 0 6%,transparent 6% 8%,#12344a 8% 15%,transparent 15% 17%,#0f2c3d 17% 22%,transparent 22% 25%,#143a52 25% 34%,transparent 34% 36%,#0f2c3d 36% 41%,transparent 41% 44%,#12344a 44% 52%,transparent 52% 55%,#0f2c3d 55% 63%,transparent 63% 66%,#143a52 66% 74%,transparent 74% 76%,#0f2c3d 76% 84%,transparent 84% 87%,#12344a 87% 95%,transparent 95%) bottom/100% 100% no-repeat;
 -webkit-mask:linear-gradient(transparent,#000 60%);mask:linear-gradient(transparent,#000 60%)}
 .top{height:64px;display:flex;align-items:center;gap:18px;padding:0 24px;position:sticky;top:0;z-index:5;background:#06141df0;border-bottom:2px solid var(--gold);backdrop-filter:blur(8px)}
-.brand{font-family:'Barlow Condensed';font-size:28px;font-weight:700;white-space:nowrap}.brand b{color:var(--gold)}.shark{margin-right:8px}
+.brand{position:relative;display:flex;align-items:center;min-width:360px;height:64px;overflow:hidden;font-family:'Barlow Condensed';font-size:28px;font-weight:700;white-space:nowrap;padding:0 16px;border-left:1px solid #d4ad5544;border-right:1px solid #d4ad5544;background:#06141d}
+.brand::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#06141df5 0%,#06141db8 38%,#06141d55 72%,#06141d18 100%),url('img/shark-tank-background-image.png') center 46%/cover no-repeat;opacity:1;z-index:0}
+.brand::after{content:'';position:absolute;inset:0;border-bottom:2px solid #d4ad5566;pointer-events:none;z-index:1}
+.brand>b{color:var(--gold)}
+.brand>span{position:relative;z-index:2;text-shadow:0 2px 8px #000}
+.brand .shark{margin-right:8px}
+.brandShark{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 46%!important;margin:0!important;border:0!important;border-radius:0!important;opacity:0!important;z-index:0!important;pointer-events:none}
 .ticker{flex:1;overflow:hidden;white-space:nowrap;font:600 13px Inter;color:var(--green);background:#0a1e2b;border:1px solid var(--line);border-radius:6px;padding:8px 12px;text-overflow:ellipsis}
 .badge{background:var(--gold);color:var(--ink);padding:7px 14px;border-radius:6px;font-weight:800;font-size:13px}
 main{position:relative;max-width:1180px;margin:26px auto;padding:0 18px}
+main::before{content:'';position:absolute;left:50%;top:0;transform:translateX(-50%);width:min(1180px,100%);height:420px;background:linear-gradient(180deg,#06141d00 0%,#06141d55 100%),url('img/shark-tank-background-image.png') center 42%/cover no-repeat;opacity:.10;pointer-events:none;z-index:0;border-radius:18px}
+main>*{position:relative;z-index:1}
 .card{background:linear-gradient(160deg,#10293a,#0a1c28);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:8px;padding:22px;margin-bottom:18px;box-shadow:0 16px 50px #0008}
 h1,h2,h3{font-family:'Barlow Condensed';margin:0 0 10px;letter-spacing:.3px}h1{font-size:44px}h2{font-size:28px}h3{font-size:20px}
 .muted{color:var(--muted)}small.muted{font-size:11px}
@@ -105,7 +113,7 @@ main{z-index:2}
 body{background:linear-gradient(#000a,#000d),url(img/sala-madera.jpg) center/cover fixed,#1d0f07}
 .scene{position:relative;max-width:1160px;margin:32px auto 0;aspect-ratio:var(--ar);overflow:hidden;container-type:inline-size;background:#000;border-radius:10px 10px 0 0;box-shadow:0 0 0 10px #1d0f07,0 -8px 40px #000a}
 .scene img{position:absolute;left:0;width:100%;top:var(--top)}
-.scene.s2{--ar:1280/560;--top:-28.57%;--tl:42%;--tt:11.8%;--tw:15.8%;--th:20.9%}
+.scene.s2{--ar:1280/560;--top:-28.57%;--tl:41.8%;--tt:12.2%;--tw:16.1%;--th:24.0%;--fs:2.8cqw;--fs2:1.25cqw}
 .scene.s1{--ar:736/330;--top:-69.7%;--tl:40.2%;--tt:36%;--tw:18.9%;--th:23.3%}
 .tv{position:absolute;left:var(--tl);top:var(--tt);width:var(--tw);height:var(--th);display:grid;place-content:center;text-align:center;padding:.5cqw;overflow:hidden;background:var(--tvbg,radial-gradient(#1a4d94,#071a3c));border-radius:var(--tvr,0);color:#fff;box-shadow:inset 0 0 1.2cqw #000c,0 0 2.5cqw #4aa3ff66}
 .tvn{font:800 clamp(7px,var(--fs,1.9cqw),46px)/1.05 'Barlow Condensed',sans-serif;text-shadow:0 0 .8cqw #7fc0ff;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
