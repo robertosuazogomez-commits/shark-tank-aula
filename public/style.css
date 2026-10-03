@@ -425,3 +425,16 @@ input:focus-visible,button:focus-visible{outline-color:var(--shark-cyan)}
 .presentationCompany{background:#37b9ff55}.presentationCompany>div{background:#031522ee}
 .presentationOffer{border-color:#37b9ff66;border-left-color:#37b9ff;background:linear-gradient(145deg,#06233aeF,#03131feF)}
 .presentationDeal{border-color:#5ce0b0;background:#05291fe8}
+/* Texto blanco en los campos de entrada */
+input,
+select,
+textarea {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9edcff !important;
+  opacity: 1;
+}
