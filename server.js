@@ -7,7 +7,11 @@ const {loadState,persistState,hasSupabase,DATA_FILE,TABLE}=require('./storage');
 const app=express();
 const server=http.createServer(app);
 const io=new Server(server);
-function teacherPin(){ return String(process.env.TEACHER_PIN || '').trim(); }
+function teacherPin(){
+  const pin = String(process.env.TEACHER_PIN || '').trim();
+  console.log('TEACHER_PIN configurado:', pin.length > 0, 'longitud:', pin.length);
+  return pin;
+}
 app.use(express.static(path.join(__dirname,'public')));
 
 const MAX_PER_ROLE=5;
