@@ -6,12 +6,8 @@ const crypto=require('crypto');
 const {loadState,persistState,hasSupabase,DATA_FILE,TABLE}=require('./storage');
 const app=express();
 const server=http.createServer(app);
-const io=new Server(server);
-function teacherPin(){
-  const pin = String(process.env.TEACHER_PIN || '').trim();
-  console.log('TEACHER_PIN configurado:', pin.length > 0, 'longitud:', pin.length);
-  return pin;
-}
+const io=new Server(server,{pingInterval:25000,pingTimeout:60000,connectTimeout:45000});
+function teacherPin(){ return String(process.env.TEACHER_PIN || '').trim(); }
 app.use(express.static(path.join(__dirname,'public')));
 
 const MAX_PER_ROLE=5;
@@ -74,13 +70,22 @@ io.on('connection',socket=>{
     if(!role)return socket.emit('errorMsg','Selecciona un rol.');
     const name=String(p.name||'').trim().slice(0,80);
     if(!name)return socket.emit('errorMsg','Escribe tu nombre.');
-    if(roleCount(role)>=MAX_PER_ROLE)return socket.emit('errorMsg',`Ya hay ${MAX_PER_ROLE} ${role==='investor'?'inversionistas':'emprendedores'} registrados.`);
-    const id=socket.id;
-    const slot=nextSlot(role);
+    // Identificador estable de pestaña: no depende del socket.id, que cambia al reconectar.
+    const suppliedId=String(p.sessionId||'').trim();
+    const id=/^[a-zA-Z0-9_-]{16,100}$/.test(suppliedId)?suppliedId:socket.id;
+    const existing=state.participants[id];
+    if(existing && existing.role!==role)return socket.emit('errorMsg','La sesión guardada corresponde a otro rol. Vuelve a entrar como participante.');
+    if(!existing && roleCount(role)>=MAX_PER_ROLE)return socket.emit('errorMsg',`Ya hay ${MAX_PER_ROLE} ${role==='investor'?'inversionistas':'emprendedores'} registrados.`);
+    const slot=existing?.slot||nextSlot(role);
     socket.data.role=role;
-    const participant={id,name,role,slot,budget:role==='investor'?Math.max(0,money(p.budget)||20000000):0,style:role==='investor'?String(p.style||'Inversionista').slice(0,80):'',joinedAt:now(),socketId:socket.id};
+    socket.data.participantId=id;
+    const participant={...(existing||{}),id,name,role,slot,budget:role==='investor'?Math.max(0,money(p.budget)||existing?.budget||20000000):0,style:role==='investor'?String(p.style||existing?.style||'Inversionista').slice(0,80):'',joinedAt:existing?.joinedAt||now(),socketId:socket.id};
     state.participants[id]=participant;
-    if(role==='investor')state.teams[id]={id,name,role,budget:participant.budget,slot,style:participant.style};
+    // Si la misma pestaña recupera la sesión, invalida la conexión antigua para evitar acciones duplicadas.
+    for(const other of io.sockets.sockets.values()){
+      if(other.id!==socket.id && other.data.participantId===id){other.data.participantId=null;other.emit('sessionReplaced');}
+    }
+    if(role==='investor')state.teams[id]={...(state.teams[id]||{}),id,name,role,budget:participant.budget,slot,style:participant.style};
     if(!state.room)state.room=String(p.room||'A').slice(0,20);
     if(role==='entrepreneur' && !state.company.name && p.companyName){
       state.company={name:String(p.companyName).slice(0,80),ask:billsSum(p.bills),bills:clean(p.bills),equity:Math.max(1,Math.min(100,money(p.equity)||20))};
@@ -94,7 +99,7 @@ io.on('connection',socket=>{
   });
 
   socket.on('setCompany',p=>{
-    const part=state.participants[socket.id];
+    const part=state.participants[socket.data.participantId];
     if(!part||part.role!=='entrepreneur')return socket.emit('errorMsg','Debes estar registrado como emprendedor.');
     if(state.company.name)return socket.emit('errorMsg','La empresa ya fue configurada.');
     const name=String(p.name||'').trim().slice(0,80);const ask=billsSum(p.bills);const equity=Math.max(1,Math.min(100,money(p.equity)||20));
@@ -106,7 +111,7 @@ io.on('connection',socket=>{
   socket.on('stage',s=>{if(!teacherOnly(socket))return;if(['lobby','pitch','questions','negotiation','result'].includes(s)){state.stage=s;log('stage',s);save();broadcast();}});
 
   socket.on('offer',p=>{
-    const part=state.participants[socket.id];const team=part&&state.teams[part.id];
+    const part=state.participants[socket.data.participantId];const team=part&&state.teams[part.id];
     if(!team)return;
     const amount=billsSum(p.bills),equity=money(p.equity);
     if(amount<=0||equity<=0)return;
@@ -115,8 +120,8 @@ io.on('connection',socket=>{
     state.offers.forEach(o=>{if(o.investorId===part.id&&o.status==='active')o.status='replaced';});
     state.offers.unshift(offer);log('offer',offer);save();broadcast();
   });
-  socket.on('withdraw',p=>{const o=state.offers.find(x=>x.id===p.id);if(o&&o.status==='active'&&o.investorId===socket.id){o.status='withdrawn';log('withdraw',o);save();broadcast();}});
-  socket.on('accept',p=>{const part=state.participants[socket.id];if(!part||part.role!=='entrepreneur')return;const o=state.offers.find(x=>x.id===p.id);if(!o)return;state.offers.forEach(x=>{if(x.status==='active')x.status='closed';});o.status='accepted';state.stage='result';log('accepted',o);save();broadcast();});
+  socket.on('withdraw',p=>{const o=state.offers.find(x=>x.id===p.id);if(o&&o.status==='active'&&o.investorId===socket.data.participantId){o.status='withdrawn';log('withdraw',o);save();broadcast();}});
+  socket.on('accept',p=>{const part=state.participants[socket.data.participantId];if(!part||part.role!=='entrepreneur')return;const o=state.offers.find(x=>x.id===p.id);if(!o)return;state.offers.forEach(x=>{if(x.status==='active')x.status='closed';});o.status='accepted';state.stage='result';log('accepted',o);save();broadcast();});
   socket.on('timer',p=>{if(!teacherOnly(socket))return;state.timer.running=!!p.running;if(p.seconds!=null)state.timer.seconds=Math.max(0,Number(p.seconds)||0);save();broadcast();});
 
   socket.on('saveEvaluation',p=>{
@@ -141,8 +146,11 @@ io.on('connection',socket=>{
     }
     state.currentRound=(Number(state.currentRound)||1)+1;
     state.stage='lobby';state.offers=[];state.events=[];state.company={name:'',ask:0,bills:{},equity:0};state.participants={};state.teams={};state.evaluations={group:{investors:null,entrepreneurs:null},individual:{}};state.timer={running:false,seconds:0};
-    save();broadcast();
+    save();io.emit('roundReset');broadcast();
   });
+  // Mensaje de cliente periódico: además de mantener viva la sesión, genera tráfico entrante
+  // para servicios de hosting que suspenden conexiones completamente inactivas.
+  socket.on('keepAlive',()=>{});
   socket.on('disconnect',()=>{ /* Conservamos el registro para que el profesor pueda evaluar. */ });
 });
 

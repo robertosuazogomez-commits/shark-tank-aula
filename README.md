@@ -3,6 +3,9 @@
 Versión de aula con registro individual de participantes y panel docente de evaluación.
 
 ## Novedades
+- Reconexión automática de Socket.IO con recuperación de la identidad del participante mediante un identificador estable por pestaña.
+- Mensajes de actividad periódicos para mantener viva la conexión durante presentaciones largas, incluso cuando no se realizan acciones.
+- Las ofertas, retiros y aceptaciones se vinculan al identificador estable del participante y no al identificador temporal de la conexión.
 - Registro individual de hasta 5 inversionistas y 5 emprendedores.
 - Identificación persistente durante la ronda mediante el socket de cada participante.
 - El primer emprendedor configura la empresa; los siguientes se incorporan al mismo equipo.
@@ -12,6 +15,11 @@ Versión de aula con registro individual de participantes y panel docente de eva
 - Selección por descriptor: Excelente (100 %), Adecuado (75 %) e Insuficiente (50 %).
 - Cálculo automático del puntaje y guardado de la evaluación en la ronda.
 - Se conserva la dinámica de ofertas, negociación, temporizador, salas y veredicto.
+
+## Conexiones largas y recuperación de sesión
+La página intenta reconectar automáticamente si se interrumpe la red y vuelve a registrar al participante usando la sesión de esa pestaña. Envía además un mensaje de actividad cada 25 segundos. Esto reduce el riesgo de que un servicio de alojamiento suspenda una conexión inactiva y evita que el cambio de `socket.id` invalide las acciones de un inversionista o emprendedor.
+
+La reconexión no puede evitar todos los fallos externos (por ejemplo, perder Internet, cerrar la pestaña o reiniciar el servidor), pero al volver la conexión la aplicación intenta recuperar la identidad y el estado de la ronda. En Render, la persistencia del estado debe configurarse con Supabase para proteger los datos ante reinicios.
 
 ## Ejecución
 
