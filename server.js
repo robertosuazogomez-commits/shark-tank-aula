@@ -10,7 +10,7 @@ const io=new Server(server,{pingInterval:25000,pingTimeout:60000,connectTimeout:
 function teacherPin(){ return String(process.env.TEACHER_PIN || '').trim(); }
 app.use(express.static(path.join(__dirname,'public')));
 
-const MAX_PER_ROLE=5;
+const MAX_PER_ROLE=6;
 const DEN=[1000000,500000,100000,10000];
 const state={
   scene:'madera',stage:'lobby',room:'',
@@ -52,6 +52,7 @@ function timerTick(){if(!state.timer.running)return;if(state.timer.seconds<=0){s
 setInterval(timerTick,1000);
 
 io.on('connection',socket=>{
+  console.log(`[socket-connect] socket=${socket.id} recovered=${Boolean(socket.recovered)}`);
   socket.emit('state',stateFor(socket));
 
   socket.on('teacherLogin',p=>{
@@ -110,15 +111,46 @@ io.on('connection',socket=>{
   socket.on('scene',v=>{if(!teacherOnly(socket))return;if(['madera','moderna','londres','clasica','galactica','rascacielos','shark'].includes(v)){state.scene=v;save();broadcast();}});
   socket.on('stage',s=>{if(!teacherOnly(socket))return;if(['lobby','pitch','questions','negotiation','result'].includes(s)){state.stage=s;log('stage',s);save();broadcast();}});
 
-  socket.on('offer',p=>{
-    const part=state.participants[socket.data.participantId];const team=part&&state.teams[part.id];
-    if(!team)return;
-    const amount=billsSum(p.bills),equity=money(p.equity);
-    if(amount<=0||equity<=0)return;
-    if(amount>team.budget)return socket.emit('errorMsg','Oferta superior al capital disponible.');
-    const offer={id:Date.now()+Math.random(),investorId:part.id,investor:team.name,role:team.role,slot:team.slot,bills:clean(p.bills),amount,equity,condition:String(p.condition||'').slice(0,120),status:'active',at:now()};
+  socket.on('offer',(p={},ack)=>{
+    // Recuperación defensiva: la identidad estable sobrevive al cambio de socket.id.
+    // El cliente envía sessionId; solo se acepta si ya existe como inversionista registrado.
+    const reply=(result)=>{if(typeof ack==='function')ack(result);};
+    let participantId=socket.data.participantId;
+    let part=participantId&&state.participants[participantId];
+    const suppliedId=String(p.sessionId||'').trim();
+    if((!part||part.role!=='investor') && /^[a-zA-Z0-9_-]{16,100}$/.test(suppliedId)){
+      const candidate=state.participants[suppliedId];
+      if(candidate?.role==='investor'){
+        participantId=suppliedId;part=candidate;
+        socket.data.participantId=suppliedId;socket.data.role='investor';
+        candidate.socketId=socket.id;
+        console.log(`[session-recovery] participant=${suppliedId} socket=${socket.id}`);
+      }
+    }
+    if(!part||part.role!=='investor'){
+      const message='No pudimos validar tu sesión de inversionista. Estamos intentando recuperar la conexión; vuelve a pulsar “Poner la oferta en la mesa” en unos segundos.';
+      console.warn(`[offer-rejected] reason=invalid-session socket=${socket.id} participant=${participantId||'none'}`);
+      if(typeof ack!=='function')socket.emit('errorMsg',message);reply({ok:false,code:'INVALID_SESSION',message});return;
+    }
+    let team=state.teams[part.id];
+    if(!team){
+      team={id:part.id,name:part.name,role:part.role,budget:Math.max(0,money(part.budget)||20000000),slot:part.slot,style:part.style||'Inversionista'};
+      state.teams[part.id]=team;
+    }
+    // Idempotencia: un reintento de la misma petición no debe crear dos ofertas.
+    const requestId=String(p.requestId||'').slice(0,100);
+    if(requestId){
+      const previous=state.offers.find(o=>o.requestId===requestId&&o.investorId===part.id);
+      if(previous){reply({ok:true,offerId:previous.id,duplicate:true,message:'La oferta ya estaba registrada.'});return;}
+    }
+    const bills=clean(p.bills),amount=billsSum(bills),equity=money(p.equity);
+    if(amount<=0||equity<=0||equity>100){const message='La oferta está incompleta. Selecciona billetes y una participación entre 1 % y 100 %.';if(typeof ack!=='function')socket.emit('errorMsg',message);reply({ok:false,code:'INVALID_OFFER',message});return;}
+    if(amount>team.budget){const message='Oferta superior al capital disponible.';if(typeof ack!=='function')socket.emit('errorMsg',message);reply({ok:false,code:'OVER_BUDGET',message});return;}
+    const offer={id:Date.now()+Math.random(),requestId:requestId||undefined,investorId:part.id,investor:team.name,role:team.role,slot:team.slot,bills,amount,equity,condition:String(p.condition||'').slice(0,120),status:'active',at:now()};
     state.offers.forEach(o=>{if(o.investorId===part.id&&o.status==='active')o.status='replaced';});
     state.offers.unshift(offer);log('offer',offer);save();broadcast();
+    console.log(`[offer-accepted] participant=${part.id} amount=${amount} equity=${equity} request=${requestId||'legacy'}`);
+    reply({ok:true,offerId:offer.id,message:'Oferta recibida y puesta en la mesa.'});
   });
   socket.on('withdraw',p=>{const o=state.offers.find(x=>x.id===p.id);if(o&&o.status==='active'&&o.investorId===socket.data.participantId){o.status='withdrawn';log('withdraw',o);save();broadcast();}});
   socket.on('accept',p=>{const part=state.participants[socket.data.participantId];if(!part||part.role!=='entrepreneur')return;const o=state.offers.find(x=>x.id===p.id);if(!o)return;state.offers.forEach(x=>{if(x.status==='active')x.status='closed';});o.status='accepted';state.stage='result';log('accepted',o);save();broadcast();});
@@ -151,7 +183,7 @@ io.on('connection',socket=>{
   // Mensaje de cliente periódico: además de mantener viva la sesión, genera tráfico entrante
   // para servicios de hosting que suspenden conexiones completamente inactivas.
   socket.on('keepAlive',()=>{});
-  socket.on('disconnect',()=>{ /* Conservamos el registro para que el profesor pueda evaluar. */ });
+  socket.on('disconnect',reason=>{ console.log(`[socket-disconnect] socket=${socket.id} participant=${socket.data.participantId||'none'} reason=${reason}`); /* Conservamos el registro para que el profesor pueda evaluar. */ });
 });
 
 const PORT=process.env.PORT||3000;
