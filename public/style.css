@@ -425,3 +425,14 @@ input:focus-visible,button:focus-visible{outline-color:var(--shark-cyan)}
 .presentationCompany{background:#37b9ff55}.presentationCompany>div{background:#031522ee}
 .presentationOffer{border-color:#37b9ff66;border-left-color:#37b9ff;background:linear-gradient(145deg,#06233aeF,#03131feF)}
 .presentationDeal{border-color:#5ce0b0;background:#05291fe8}
+
+/* Restaurar texto blanco en campos de acceso sobre fondo oscuro. */
+input, select, textarea { color: #ffffff !important; }
+input::placeholder, textarea::placeholder { color: #b8c8d6 !important; opacity: 1; }
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-in-out 0s;
+}

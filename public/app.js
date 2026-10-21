@@ -93,7 +93,7 @@ function setRole(role){
 document.querySelectorAll('.roleBtns button').forEach(b=>b.onclick=()=>setRole(b.dataset.role));
 $('teacherEnter').onclick=teacherLogin;
 $('teacherPin').addEventListener('keydown',e=>{if(e.key==='Enter')teacherLogin()});
-function enter(){me.name=$('who').value.trim();me.room=$('room').value.trim()||'A';if(!me.name)return alert('Escribe tu nombre.');
+function enter(){me.name=$('who').value.trim();me.room=$('room')?.value.trim()||'A';if(!me.name)return alert('Escribe tu nombre.');
 if(me.role==='entrepreneur'){const p={role:'entrepreneur',name:me.name,room:me.room};if(!S.company?.name){if(!$('company').value.trim())return alert('Escribe el nombre de la empresa.');if(!sum(pk))return alert('Elige los billetes que solicitarán.');p.companyName=$('company').value.trim();p.bills=pk;p.equity=$('equity').value}sessionStorage.setItem(SESSION_KEY,JSON.stringify(p));socket.emit('register',{...p,sessionId:stableSessionId()});return}
 const budget=Math.max(0,Number($('budget').value)||20000000);const p={role:'investor',name:me.name,room:me.room,budget,style:$('investorRole').value||'Inversionista'};sessionStorage.setItem(SESSION_KEY,JSON.stringify(p));socket.emit('register',{...p,sessionId:stableSessionId()})}
 function base(){$('entryGate').classList.add('hidden');$('teacherLogin').classList.add('hidden');$('login').classList.add('hidden');$('panel').classList.remove('hidden')}
