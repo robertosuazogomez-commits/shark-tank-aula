@@ -25,7 +25,9 @@ La reconexión no puede evitar todos los fallos externos (por ejemplo, perder In
 - La acción de ofertar ahora incluye un identificador único de petición y una confirmación explícita del servidor.
 - Si el socket perdió su asociación temporal, el servidor intenta recuperar al inversionista a partir de su `sessionId` estable ya registrado.
 - Los reintentos de una misma petición son idempotentes: no crean dos ofertas si el servidor ya había registrado la primera y solo se perdió la confirmación.
-- Si no se recibe respuesta, la interfaz muestra un mensaje y conserva la selección de billetes; no reinicia la ronda ni obliga a volver a entrar manualmente.
+- Se evita registrar dos veces al inversionista durante una reconexión, lo que podía volver a dibujar el formulario en mitad del envío.
+- Si el servidor indica que la sesión no está asociada, la interfaz registra de nuevo al participante y reintenta una sola vez con el mismo identificador de petición.
+- La selección de billetes solo se limpia cuando el servidor confirma que la oferta fue recibida; ante un fallo, se conserva para poder reintentar.
 - Se añadieron registros de conexión, desconexión, recuperación de sesión y aceptación/rechazo de ofertas en los Logs de Render.
 
 ## Ejecución
@@ -73,3 +75,11 @@ La pantalla inicial ahora separa el acceso en dos rutas: **Panel del profesor** 
 En Render, agrega `TEACHER_PIN` en **Environment Variables** y usa un código privado. No lo pongas en GitHub ni en el HTML/JavaScript del navegador. Las acciones de profesor (salas, etapas, temporizador, evaluaciones y nueva ronda) también se validan en el servidor.
 
 La nueva sala galáctica utiliza la fotografía subida para esta versión y conserva la sala de madera sin modificar su geometría de pantalla.
+
+
+## v9 — Reintento ante confirmación demorada
+
+- Si una oferta no recibe confirmación en 7 segundos, se reintenta una sola vez aunque el navegador todavía marque la conexión como activa.
+- El reintento conserva el mismo `requestId`, de modo que el servidor puede reconocer la misma oferta y no crear una duplicada.
+- Si tampoco llega confirmación, se conserva la selección de billetes y se pide comprobar la mesa antes de repetir manualmente.
+- Esto aborda el caso de conexión aparentemente activa pero con confirmación perdida/demorada; no sustituye una prueba en Render con los registros del servidor.

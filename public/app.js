@@ -1,4 +1,14 @@
-const socket=io();
+const socket=io({reconnection:true,reconnectionAttempts:Infinity,reconnectionDelay:1000,reconnectionDelayMax:10000,timeout:20000});
+const SESSION_KEY='sharkTankAulaParticipantSession';
+const SESSION_ID_KEY='sharkTankAulaParticipantId';
+function stableSessionId(){
+  let id=sessionStorage.getItem(SESSION_ID_KEY);
+  if(!id){id=(crypto.randomUUID?crypto.randomUUID():('st'+Date.now().toString(36)+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)));sessionStorage.setItem(SESSION_ID_KEY,id);}
+  return id;
+}
+function savedParticipant(){try{return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null')}catch{return null}}
+function registerSavedParticipant(){const p=savedParticipant();if(p&&p.role&&p.name&&socket.connected)socket.emit('register',{...p,sessionId:stableSessionId()});}
+
 let me={role:null,name:'',room:'',id:'',slot:''},S={},pk={},pkAvail=null,shown=false;
 const $=id=>document.getElementById(id);
 const D=[1000000,500000,100000,10000];
@@ -60,6 +70,7 @@ function backToEntry(){
   $('login').classList.add('hidden');
   $('panel').classList.add('hidden');
   me={role:null,name:'',room:'',id:'',slot:''};
+  sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(SESSION_ID_KEY);
 }
 function teacherLogin(){
   const pin=$('teacherPin')?.value||'';
@@ -83,8 +94,8 @@ document.querySelectorAll('.roleBtns button').forEach(b=>b.onclick=()=>setRole(b
 $('teacherEnter').onclick=teacherLogin;
 $('teacherPin').addEventListener('keydown',e=>{if(e.key==='Enter')teacherLogin()});
 function enter(){me.name=$('who').value.trim();me.room=$('room').value.trim()||'A';if(!me.name)return alert('Escribe tu nombre.');
-if(me.role==='entrepreneur'){const p={role:'entrepreneur',name:me.name,room:me.room};if(!S.company?.name){if(!$('company').value.trim())return alert('Escribe el nombre de la empresa.');if(!sum(pk))return alert('Elige los billetes que solicitarán.');p.companyName=$('company').value.trim();p.bills=pk;p.equity=$('equity').value}socket.emit('register',p);return}
-const budget=Math.max(0,Number($('budget').value)||20000000);socket.emit('register',{role:'investor',name:me.name,room:me.room,budget,style:$('investorRole').value||'Inversionista'})}
+if(me.role==='entrepreneur'){const p={role:'entrepreneur',name:me.name,room:me.room};if(!S.company?.name){if(!$('company').value.trim())return alert('Escribe el nombre de la empresa.');if(!sum(pk))return alert('Elige los billetes que solicitarán.');p.companyName=$('company').value.trim();p.bills=pk;p.equity=$('equity').value}sessionStorage.setItem(SESSION_KEY,JSON.stringify(p));socket.emit('register',{...p,sessionId:stableSessionId()});return}
+const budget=Math.max(0,Number($('budget').value)||20000000);const p={role:'investor',name:me.name,room:me.room,budget,style:$('investorRole').value||'Inversionista'};sessionStorage.setItem(SESSION_KEY,JSON.stringify(p));socket.emit('register',{...p,sessionId:stableSessionId()})}
 function base(){$('entryGate').classList.add('hidden');$('teacherLogin').classList.add('hidden');$('login').classList.add('hidden');$('panel').classList.remove('hidden')}
 const stageControls=()=>'<div class="stagebar">'+stages.map(x=>`<button data-stage="${x[0]}" class="${S.stage===x[0]?'active':''}">${x[1]}</button>`).join('')+'</div>';
 function hero(){const c=S.company||{};return `<div class="hero"><div><span class="pill">💼 Empresa en el Tank</span><h1>${esc(c.name||'Esperando emprendedores…')}</h1><div class="muted">Valoración implícita: <b>${valuation(c.ask,c.equity)}</b></div></div><div><div class="muted">Solicitan</div><div class="big">${peso(c.ask)}</div>${stack(c.bills)}</div><div class="donut" style="--p:${c.equity||0}"><span>${c.equity||0}%</span></div></div>`}
@@ -115,8 +126,9 @@ function participantsHTML(){const ps=Object.values(S.participants||{});if(!ps.le
 function scoreFor(max,level){return Math.round(max*level*100)/100}
 function rubricHTML(scope,key,rubric,current){const scores=current?.scores||{};const total=rubric.reduce((t,r)=>t+(Number(scores[r[0]])||0),0);return `<div class="rubricHead"><div><span class="pill">${scope==='group'?'Evaluación grupal':'Evaluación individual'}</span><h3>${scope==='group'?(key==='investors'?'Equipo inversionistas':'Equipo emprendedores'):(S.participants?.[key]?.name||'Estudiante')}</h3><p class="muted">Marca un descriptor por criterio. El puntaje se asigna automáticamente. <b>Excelente = 100 % · Adecuado = 75 % · Insuficiente = 50 %</b></p></div><div class="rubricTotal">${total}<small>/100</small></div></div>${rubric.map(r=>{const selected=Number(scores[r[0]]);return `<div class="rubricItem"><div class="rubricTitle"><b>${esc(r[1])}</b><span>máx. ${r[2]} pts</span></div><div class="levels">${LEVELS.map(([code,label,f],idx)=>{const val=scoreFor(r[2],f);return `<button class="level ${selected===val?'selected':''}" onclick="chooseLevel('${scope}','${key}','${r[0]}',${val})"><strong>${label}</strong><span>${esc(r[idx+3])}</span><em>${val} pts</em></button>`}).join('')}</div></div>`}).join('')}<div class="actions rubricActions"><button class="gold" onclick="saveRubric('${scope}','${key}')">Guardar evaluación · ${total}/100</button></div>`}
 let evalDraft={};
-function evaluationHTML(){const group=S.evaluations?.group||{};const individual=S.evaluations?.individual||{};const ps=Object.values(S.participants||{});const currentKey=$('evalPerson')?.value||ps[0]?.id||'';const groupKey=$('evalGroup')?.value||'investors';const scope=$('evalScope')?.value||'group';let body='';if(scope==='group'){const base=group[groupKey]||{};const draft=evalDraft.group?.[groupKey]||{};body=rubricHTML('group',groupKey,GROUP_RUBRIC,{...base,scores:{...(base.scores||{}),...draft}})}else if(currentKey){const base=individual[currentKey]||{};const draft=evalDraft.individual?.[currentKey]||{};body=rubricHTML('individual',currentKey,IND_RUBRIC,{...base,scores:{...(base.scores||{}),...draft}})}else body='<p class="muted">Registra estudiantes para comenzar las evaluaciones individuales.</p>';return `<div class="evalControls"><label>Tipo<select id="evalScope" onchange="refreshEvaluation()"><option value="group" ${scope==='group'?'selected':''}>Evaluación grupal</option><option value="individual" ${scope==='individual'?'selected':''}>Evaluación individual</option></select></label>${scope==='group'?`<label>Equipo<select id="evalGroup" onchange="refreshEvaluation()"><option value="investors" ${groupKey==='investors'?'selected':''}>Inversionistas</option><option value="entrepreneurs" ${groupKey==='entrepreneurs'?'selected':''}>Emprendedores</option></select></label>`:`<label>Estudiante<select id="evalPerson" onchange="refreshEvaluation()">${ps.map(p=>`<option value="${p.id}" ${p.id===currentKey?'selected':''}>${esc(p.name)} · ${esc(p.slot)}</option>`).join('')}</select></label>`}</div>${body}`}
-function refreshEvaluation(){if($('evaluation')){$('evaluation').innerHTML=evaluationHTML();$('evaluation')._h=undefined}}
+function evaluationHTML(){const group=S.evaluations?.group||{};const individual=S.evaluations?.individual||{};const ps=Object.values(S.participants||{});const currentKey=$('evalPerson')?.value||ps[0]?.id||'';const groupKey=$('evalGroup')?.value||'investors';const scope=$('evalScope')?.value||'group';let body='';if(scope==='group'){const base=group[groupKey]||{};const draft=evalDraft.group?.[groupKey]||{};body=rubricHTML('group',groupKey,GROUP_RUBRIC,{...base,scores:{...(base.scores||{}),...draft}})}else if(currentKey){const base=individual[currentKey]||{};const draft=evalDraft.individual?.[currentKey]||{};body=rubricHTML('individual',currentKey,IND_RUBRIC,{...base,scores:{...(base.scores||{}),...draft}})}else body='<p class="muted">Registra estudiantes para comenzar las evaluaciones individuales.</p>';return `<div class="evalControls"><label>Tipo<select id="evalScope" onchange="refreshEvaluation(true)"><option value="group" ${scope==='group'?'selected':''}>Evaluación grupal</option><option value="individual" ${scope==='individual'?'selected':''}>Evaluación individual</option></select></label>${scope==='group'?`<label>Equipo<select id="evalGroup" onchange="refreshEvaluation(true)"><option value="investors" ${groupKey==='investors'?'selected':''}>Inversionistas</option><option value="entrepreneurs" ${groupKey==='entrepreneurs'?'selected':''}>Emprendedores</option></select></label>`:`<label>Estudiante<select id="evalPerson" onchange="refreshEvaluation(true)">${ps.map(p=>`<option value="${p.id}" ${p.id===currentKey?'selected':''}>${esc(p.name)} · ${esc(p.slot)}</option>`).join('')}</select></label>`}</div>${body}`}
+function evaluationDataSignature(){return JSON.stringify({participants:Object.values(S.participants||{}).map(p=>[p.id,p.name,p.slot]),evaluations:S.evaluations||{}})}
+function refreshEvaluation(force=false){const el=$('evaluation');if(!el)return;const signature=evaluationDataSignature();if(!force&&el.dataset.evalSignature===signature)return;el.innerHTML=evaluationHTML();el.dataset.evalSignature=signature}
 function chooseLevel(scope,key,criterion,val){if(!evalDraft[scope])evalDraft[scope]={};if(!evalDraft[scope][key])evalDraft[scope][key]={};evalDraft[scope][key][criterion]=val;const base=scope==='group'?(S.evaluations?.group?.[key]||{}):(S.evaluations?.individual?.[key]||{});const merged={scores:{...(base.scores||{}),...evalDraft[scope][key]}};if(scope==='group'){const g=$('evalGroup')?.value||key;$('evaluation').innerHTML=rubricHTML('group',g,GROUP_RUBRIC,merged)}else{$('evaluation').innerHTML=rubricHTML('individual',key,IND_RUBRIC,merged)} }
 function saveRubric(scope,key){const draft=evalDraft[scope]?.[key]||{};const base=scope==='group'?(S.evaluations?.group?.[key]||{}):(S.evaluations?.individual?.[key]||{});const scores={...(base.scores||{}),...draft};const rubric=scope==='group'?GROUP_RUBRIC:IND_RUBRIC;const total=Math.round(rubric.reduce((t,r)=>t+(Number(scores[r[0]])||0),0)*100)/100;if(Object.keys(scores).length<rubric.length)return alert('Marca un descriptor en todos los criterios antes de guardar.');socket.emit('saveEvaluation',{scope,group:scope==='group'?key:undefined,participantId:scope==='individual'?key:undefined,scores,total});if(evalDraft[scope])delete evalDraft[scope][key]}
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
@@ -153,14 +165,90 @@ function downloadEvaluations(){
 }
 
 function refresh(){sceneUpdate();presentationUpdate();const c=S.company||{};if($('stageBadge'))$('stageBadge').textContent=stageName();put('ticker',c.name?`📈 ${esc(c.name)} busca ${peso(c.ask)} por ${c.equity}% · ${act().length} ofertas activas`:`Mercado abierto · ${Object.keys(S.participants||{}).length} participantes registrados`);if($('hero'))put('hero',hero());if($('offers'))put('offers',offersHTML());if($('participants'))put('participants',participantsHTML());if($('evaluation'))refreshEvaluation();if(me.role==='investor'&&$('ic')){$('ic').textContent=c.name||'—';$('ia').textContent=c.ask?peso(c.ask):'—';$('ie').textContent=(c.equity||0)+'%'}if(me.role==='teacher'){if($('timer'))$('timer').textContent=fmt(S.timer?.seconds||0);put('tstats',`<div class="stat">Ofertas<b>${act().length}</b></div><div class="stat">Inversionistas<b>${Object.values(S.participants||{}).filter(p=>p.role==='investor').length}/6</b></div><div class="stat">Emprendedores<b>${Object.values(S.participants||{}).filter(p=>p.role==='entrepreneur').length}/6</b></div><div class="stat">Etapa<b>${stageName()}</b></div>`);put('log',(S.events||[]).map(e=>`<div><b>${e.at}</b> ${esc(e.type)}: ${typeof e.data==='string'?esc(e.data):(e.data?.investor?esc(e.data.investor)+' — '+peso(e.data.amount)+' / '+e.data.equity+'%':esc(JSON.stringify(e.data)))}</div>`).join(''));document.querySelectorAll('[data-stage]').forEach(b=>b.classList.toggle('active',b.dataset.stage===S.stage))}const acc=(S.offers||[]).find(o=>o.status==='accepted');if(S.stage==='result'&&acc&&!shown){shown=true;vault(acc)}if(S.stage!=='result'){shown=false;stopDeal()}}
-function makeOffer(){if(!sum(pk))return alert('Pon al menos un billete sobre la mesa.');socket.emit('offer',{investorId:me.id,bills:pk,equity:$('offerEquity').value,condition:$('condition').value})}
+let offerPending=false;
+function makeOffer(){
+  if(offerPending)return;
+  if(!sum(pk))return alert('Pon al menos un billete sobre la mesa.');
+  if(!me.role||me.role!=='investor')return alert('No se ha validado tu sesión de inversionista.');
+  const saved=savedParticipant();
+  if(!saved||saved.role!=='investor')return alert('No encontramos tu sesión de inversionista. Vuelve a entrar con tu nombre y capital.');
+  const sessionId=stableSessionId();
+  const payload={bills:{...pk},equity:$('offerEquity')?.value||20,condition:$('condition')?.value||'',sessionId,requestId:(crypto.randomUUID?crypto.randomUUID():('offer'+Date.now()+Math.random().toString(36).slice(2)))};
+  offerPending=true;
+  let timeoutRetryTried=false;
+  let sessionRecoveryTried=false;
+  const setButton=(disabled,label)=>{const b=document.querySelector('button[onclick="makeOffer()"]');if(b){b.disabled=disabled;b.textContent=label;}};
+  const finish=(result)=>{
+    if(!offerPending)return;
+    offerPending=false;setButton(false,'🦈 Poner la oferta en la mesa');
+    if(result?.ok){
+      if($('ticker'))put('ticker',result.message||'Oferta recibida.');
+      // Solo vaciamos la selección tras confirmación del servidor.
+      clearPick();
+      return;
+    }
+    alert(result?.message||'No recibimos confirmación del servidor. Comprueba si la oferta aparece en la mesa antes de volver a intentarlo.');
+  };
+  const emitOffer=()=>{
+    if(!offerPending)return;
+    if(!socket.connected){
+      if($('ticker'))put('ticker','Recuperando conexión…');
+      const onRegistered=()=>{socket.off('registered',onRegistered);if(offerPending)emitOffer();};
+      socket.once('registered',onRegistered);
+      socket.connect();
+      // El manejador global de conexión registra la sesión guardada. Este respaldo cubre
+      // el caso en que no haya una sesión persistida por una carga antigua de la página.
+      const onConnect=()=>{
+        socket.off('connect',onConnect);
+        if(!savedParticipant())socket.emit('register',{...saved,sessionId});
+      };
+      socket.once('connect',onConnect);
+      setTimeout(()=>{socket.off('registered',onRegistered);socket.off('connect',onConnect);if(offerPending)finish({ok:false,message:'No se pudo confirmar la recuperación de la conexión. Tu selección se conserva; comprueba la mesa y vuelve a intentarlo.'});},15000);
+      return;
+    }
+    socket.timeout(7000).emit('offer',payload,(err,result)=>{
+      if(!err&&result?.ok){finish(result);return;}
+      // Si el servidor perdió la asociación entre socket y participante, registramos
+      // la sesión estable una sola vez y reintentamos con el mismo requestId.
+      if(!err&&result?.code==='INVALID_SESSION'&&!sessionRecoveryTried){
+        sessionRecoveryTried=true;
+        const onRegistered=()=>{socket.off('registered',onRegistered);if(offerPending)emitOffer();};
+        socket.once('registered',onRegistered);
+        socket.emit('register',{...saved,sessionId});
+        setTimeout(()=>{socket.off('registered',onRegistered);if(offerPending)finish({ok:false,message:'No pudimos recuperar tu sesión. Vuelve a entrar como inversionista e inténtalo otra vez.'});},8000);
+        return;
+      }
+      // Un timeout no demuestra que el servidor no haya procesado la oferta:
+      // puede haberse perdido o retrasado solo la confirmación, especialmente
+      // al reanudar una pestaña que estuvo en segundo plano. Reintentamos una vez
+      // con el mismo requestId; el servidor deduplica peticiones repetidas.
+      if(err&&!timeoutRetryTried){
+        timeoutRetryTried=true;
+        if($('ticker'))put('ticker',socket.connected?'Confirmación demorada · verificando la oferta…':'Conexión interrumpida · recuperando y verificando la oferta…');
+        emitOffer(1);
+        return;
+      }
+      finish(err?{ok:false,message:'No recibimos confirmación del servidor después de reintentar. Tu selección se conserva; comprueba si la oferta ya aparece en la mesa antes de volver a intentarlo.'}:result);
+    });
+  };
+  setButton(true,'Enviando oferta…');
+  emitOffer();
+}
 const timerSet=s=>socket.emit('timer',{seconds:s,running:false});const timerToggle=()=>socket.emit('timer',{seconds:S.timer?.seconds||0,running:!S.timer?.running});
 const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+socket.on('connect',()=>{registerSavedParticipant();if(me.role&&$('ticker'))put('ticker','Conexión recuperada');});
+socket.on('disconnect',()=>{if(me.role&&me.role!=='teacher'&&$('ticker'))put('ticker','Conexión interrumpida · reconectando automáticamente…');});
+socket.on('connect_error',()=>{if(me.role&&me.role!=='teacher'&&$('ticker'))put('ticker','Sin conexión temporal · intentando reconectar…');});
+socket.on('sessionReplaced',()=>{if($('ticker'))put('ticker','Esta sesión se abrió en otra conexión. Usa solo una pestaña para participar.');});
+socket.on('roundReset',()=>{if(me.role&&me.role!=='teacher')backToEntry();});
+// Tráfico entrante periódico para mantener activa la conexión durante presentaciones largas.
+setInterval(()=>{if(socket.connected)socket.emit('keepAlive',{at:Date.now()});},25000);
 socket.on('state',s=>{S=s;tvUpdate();if(me.role&&!$('panel').classList.contains('hidden'))refresh()});
 socket.on('teacherAuthenticated',()=>{me={role:'teacher',name:'Profesor',room:'',id:'teacher',slot:'Profesor'};renderTeacher()});
-socket.on('registered',p=>{me={...me,...p};if(me.role==='entrepreneur')renderEntrepreneur();else renderInvestor(p.style||'Inversionista')});
+socket.on('registered',p=>{const alreadyHere=!!me.role&&me.id===p.id;me={...me,...p};if(!alreadyHere){if(me.role==='entrepreneur')renderEntrepreneur();else renderInvestor(p.style||'Inversionista')}else if($('panel')&&!$('panel').classList.contains('hidden'))refresh()});
 socket.on('teacherLoginError',m=>showTeacherError(m));
 socket.on('errorMsg',m=>alert(m));
+if(socket.connected)registerSavedParticipant();
 tvUpdate();
 let dealAudio=null;
 function synth(){if(synth.d)return;synth.d=1;try{const c=new(window.AudioContext||webkitAudioContext)(),t=c.currentTime;[523,659,784,1047,784,1047,1319].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain(),s=t+i*.14;o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.0001,s);g.gain.exponentialRampToValueAtTime(.3,s+.02);g.gain.exponentialRampToValueAtTime(.0001,s+.4);o.connect(g).connect(c.destination);o.start(s);o.stop(s+.45)})}catch(e){}}
